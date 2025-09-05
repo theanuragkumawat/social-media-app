@@ -39,9 +39,11 @@ const userSchema = new mongoose.Schema(
       },
       followersCount: {
          type: Number,
+         default:0
       },
       followingCount: {
          type: Number,
+         default:0
       },
       isPrivate: {
          type: Boolean,
@@ -78,9 +80,9 @@ const userSchema = new mongoose.Schema(
    { timestamps: true }
 );
 
-userSchema.pre("save", async function () {
+userSchema.pre("save", async function (next) {
    if (this.isModified("password")) {
-      this.password = bcrypt.hash(this.password, 10);
+      this.password = await bcrypt.hash(this.password, 10);
       next();
    } else {
       next();

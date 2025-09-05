@@ -41,4 +41,4 @@ const storySchema = new mongoose.Schema(
    { timestamps: true }
 );
 
-const Story = mongoose.model("Story", storySchema);
+export const Story = mongoose.model("Story", storySchema);
