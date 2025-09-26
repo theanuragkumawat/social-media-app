@@ -29,7 +29,7 @@ const storySchema = new mongoose.Schema(
          enum: ["public", "close_friends", "archive"],
          default: "public",
       },
-      views: {
+      totalViews: {
          type: Number,
          default: 0,
       },

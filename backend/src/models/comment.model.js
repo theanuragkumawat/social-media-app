@@ -22,8 +22,13 @@ const commentSchema = new mongoose.Schema(
       },
       owner: {
          type: mongoose.Schema.Types.ObjectId,
-         ref: "Post",
+         ref: "User",
       },
+      parent: {
+         type: mongoose.Schema.Types.ObjectId,
+         ref: "Comment",
+         default: null
+      }
    },
    { timestamps: true }
 );

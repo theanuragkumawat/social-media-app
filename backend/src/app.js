@@ -22,12 +22,35 @@ app.get('/',(req,res) => {
 })
 
 // routes import
-import userRouter from "./routes/user.route.js"
 import healthCheckRouter from "./routes/healthcheck.route.js"
+import userRouter from "./routes/user.route.js"
+import postRouter from "./routes/post.route.js"
+import followRouter from "./routes/follow.route.js"
+import commentRouter from "./routes/comment.route.js"
+import likeRouter from "./routes/like.route.js"
+import storyRouter from "./routes/story.route.js"
 
-//routes
-app.use('/api/v1/users',userRouter); //for give direction
+//Routes
 app.use('/api/v1/healthcheck',healthCheckRouter);
+app.use('/api/v1/users',userRouter); //for give direction
 
+//post routes
+app.use('/api/v1/posts',postRouter)
+app.use('/api/v1/users',postRouter)
+
+//follow routes
+app.use('/api/v1/users',followRouter)
+
+//comment routes
+app.use('/api/v1/posts',commentRouter)
+app.use('/api/v1/comments',commentRouter)
+
+//likes routes
+app.use('/api/v1/posts',likeRouter)
+app.use('/api/v1/comments',likeRouter)
+
+//story routes
+app.use('/api/v1/stories',storyRouter)
+app.use('/api/v1/users',storyRouter)
 
 export { app };

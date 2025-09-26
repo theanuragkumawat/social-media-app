@@ -4,7 +4,9 @@ const likeSchema = new mongoose.Schema(
     {
         likedBy:{
             type:mongoose.Schema.Types.ObjectId,
-            ref:'User'
+            ref:'User',
+            required: true,
+            index:true
         },
         targetType:{
             type:String,

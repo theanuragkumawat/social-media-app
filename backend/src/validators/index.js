@@ -30,9 +30,66 @@ const userRegisterValidator = () => {
             minSymbols: 1,
             returnScore: false,
          })
-         .withMessage("Password must include uppercase, lowercase, number, and special character"),,
-      body("fullname").trim().notEmpty().withMessage("Name is required")
+         .withMessage(
+            "Password must include uppercase, lowercase, number, and special character"
+         ),
+      ,
+      body("fullname").trim().notEmpty().withMessage("Name is required"),
    ];
 };
 
-export { userRegisterValidator };
+const userLoginValidator = () => {
+   return [
+      body("email")
+         .notEmpty()
+         .withMessage("Email is required")
+         .isEmail()
+         .withMessage("Email is invalid"),
+      body("password").notEmpty().withMessage("Password is required"),
+   ];
+};
+
+const userChangeCurrentPasswordValidator = () => {
+   return [
+      body("oldPassword")
+      .notEmpty()
+      .withMessage("Old password is required"),
+      body("newPassword")
+      .notEmpty()
+      .withMessage("New Password is required")
+   ]
+}
+
+const userForgotPasswordValidator = () => {
+   return [
+      body('email')
+      .notEmpty()
+      .withMessage("Email is required")
+      .isEmail()
+      .withMessage("Email is invalid")
+   ]
+}
+
+const userResetForgotPasswordValidator = () => {
+   return [
+      body("newPassword")
+      .notEmpty()
+      .withMessage("New password is required")
+   ]
+}
+
+const uploadPostValidator = () => {
+   return [
+      body("caption")
+      .optional()
+      .trim()
+   ]
+}
+export { 
+   userRegisterValidator,
+   userLoginValidator,
+   userChangeCurrentPasswordValidator,
+   userForgotPasswordValidator,
+   userResetForgotPasswordValidator,
+   uploadPostValidator,
+ };
