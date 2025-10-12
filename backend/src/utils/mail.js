@@ -39,6 +39,21 @@ const emailVerificationMailgenContent = function (username, verificationUrl) {
    };
 };
 
+const emailOtpVerificationMailgenContent = function(username,otp){
+   return {
+      body: {
+         name: username,
+         intro: "Hi, Welcome to Social Media App We're excited to have you.",
+         outro: `<p>To complete your registration, Please use the following OTP to verify your email:</p>
+         <div style="margin-top:20px; text-align:center;">
+            <h1 style="font-size:50px; letter-spacing:10px; color:#1a73e8;">${otp}</h1>
+            <p>This OTP will expire in 10 minutes.</p>
+           </div>
+           If you did not request a email verification, please ignore this email. This link will expire in 20 minutes for your security.\nThanks`,
+      },
+   };
+}
+
 const sendEmail = async function (options) {
    let mailGenerator = new Mailgen({
       theme: "default",
@@ -83,5 +98,6 @@ export {
    emailVerificationMailgenContent,
    forgotPasswordMailgenContent,
    sendEmail,
+   emailOtpVerificationMailgenContent
 };
 // dry

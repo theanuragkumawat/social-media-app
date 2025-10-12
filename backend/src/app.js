@@ -1,3 +1,4 @@
+import { errorHandler } from "./middlewares/error.middleware.js";
 import mongoose from "mongoose";
 import express, { urlencoded } from "express";
 import cookieParser from "cookie-parser";
@@ -53,4 +54,7 @@ app.use('/api/v1/comments',likeRouter)
 app.use('/api/v1/stories',storyRouter)
 app.use('/api/v1/users',storyRouter)
 
+
+
+app.use(errorHandler);
 export { app };

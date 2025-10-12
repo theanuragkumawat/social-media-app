@@ -9,6 +9,7 @@ import {
    sendEmail,
    emailVerificationMailgenContent,
    forgotPasswordMailgenContent,
+   emailOtpVerificationMailgenContent,
 } from "../utils/mail.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -50,7 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
    let avatarLocalPath;
    if (req.file?.path) {
-      avatarLocalPath = req.file.path;
+      avatarLocalPath = req.file?.path;
    }
    // console.log(avatarLocalPath);
 
@@ -67,22 +68,22 @@ const registerUser = asyncHandler(async (req, res) => {
       password,
    });
 
-   const { hashedToken, unhashedToken, tokenExpiry } =
-      user.generateTemporaryToken();
+   // const { hashedToken, unhashedToken, tokenExpiry } =
+   //    user.generateTemporaryToken();
 
-   user.emailVerificationToken = hashedToken;
-   user.emailVerificationExpiry = tokenExpiry;
+   // user.emailVerificationToken = hashedToken;
+   // user.emailVerificationExpiry = tokenExpiry;
 
-   await user.save({ validateBeforeSave: false });
+   // await user.save({ validateBeforeSave: false });
 
-   await sendEmail({
-      email: user.email,
-      subject: "Please verify your email",
-      mailgenContent: emailVerificationMailgenContent(
-         user.username,
-         `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unhashedToken}`
-      ),
-   });
+   // await sendEmail({
+   //    email: user.email,
+   //    subject: "Please verify your email",
+   //    mailgenContent: emailVerificationMailgenContent(
+   //       user.username,
+   //       `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unhashedToken}`
+   //    ),
+   // });
 
    const createdUser = await User.findById(user._id).select(
       "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
@@ -96,12 +97,40 @@ const registerUser = asyncHandler(async (req, res) => {
    }
 
    res.status(200).json(
-      new ApiResponse(
-         200,
-         createdUser,
-         "User register successfully and verification email sent"
-      )
+      new ApiResponse(200, createdUser, "User register successfully")
    );
+});
+
+const dobRegisterUser = asyncHandler(async (req, res) => {
+   const { userId } = req.params;
+   const { dob } = req.body;
+   const dobIso = new Date(dob);
+   const user = await User.findById(userId)
+
+   if (!user) {
+      throw new ApiError(500, "Something went wrong while updating dob");
+   }
+
+   const {otp,otpExpiry} = user.generateOtp()
+
+   user.dob = dob;
+   user.otp = otp;
+   user.otpExpiry = otpExpiry;
+
+   await user.save({ validateBeforeSave: false });
+
+   await sendEmail({
+      email: user.email,
+      subject: "Please verify your email",
+      mailgenContent: emailOtpVerificationMailgenContent(
+         user.username,
+         otp
+      ),
+   });
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Dob updated and OTP sent successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -111,13 +140,15 @@ const loginUser = asyncHandler(async (req, res) => {
       throw new ApiError(400, "All fields are required");
    }
 
-   const user = await User.findOne({ email });
+   const user = await User.findOne({ email:email });
 
    if (!user) {
       throw new ApiError(404, "User does not exist");
    }
 
-   const isPasswordValid = user.isPasswordCorrect(password);
+   const isPasswordValid = await user.isPasswordCorrect(password);
+   console.log(isPasswordValid);
+   
    if (!isPasswordValid) {
       throw new ApiError(404, "Invalid user credentials");
    }
@@ -249,9 +280,37 @@ const verifyEmail = asyncHandler(async (req, res) => {
       );
 });
 
+const verifyOtp = asyncHandler(async (req,res) => {
+   const {otp} = req.body
+
+   if(!otp){
+      throw new ApiError(400,"OTP is required")
+   }
+
+   const user = await User.findOne({
+      otp: otp,
+      otpExpiry: { $gt: Date.now() },
+   });
+
+   if (!user) {
+      throw new ApiError(400, "OTP is invalid or expired");
+   }
+
+   user.isVerified = true;
+   user.otp = undefined;
+   user.otpExpiry = undefined;
+   await user.save({ validateBeforeSave: false });
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, user, "OTP verified successfully"));
+      
+
+})
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-   const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+   const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
    if (!incomingRefreshToken) {
       throw new ApiError(401, "Unauthorized request ");
    }
@@ -375,10 +434,12 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
 
 export {
    registerUser,
+   dobRegisterUser,
    loginUser,
    logoutUser,
    getCurrentUser,
    verifyEmail,
+   verifyOtp,
    resendEmailVerification,
    refreshAccessToken,
    forgotPasswordRequest,

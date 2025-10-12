@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { changeCurrentPassword, forgotPasswordRequest, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, resendEmailVerification, resetForgotPassword, verifyEmail } from "../controllers/user.controller.js";
+import { changeCurrentPassword, dobRegisterUser, forgotPasswordRequest, getCurrentUser, loginUser, logoutUser, refreshAccessToken, registerUser, resendEmailVerification, resetForgotPassword, verifyEmail, verifyOtp } from "../controllers/user.controller.js";
 import { getAllUserPosts } from "../controllers/post.controller.js";
 import {
    userChangeCurrentPasswordValidator,
@@ -15,7 +15,6 @@ const router = Router();
 
 // unsecured
 router.route("/register").post(
-   upload.single("avatar"),
    userRegisterValidator(),
    validate,
    registerUser //register controller
@@ -26,6 +25,8 @@ router.route("/verify-email/:verificationToken").get(verifyEmail)
 router.route("/refresh-token").post(refreshAccessToken)
 router.route("/forgot-password").post(userForgotPasswordValidator(),validate, forgotPasswordRequest)
 router.route("/reset-password/:unHashedToken").post(userResetForgotPasswordValidator(),validate, resetForgotPassword)
+router.route("/dob-register/:userId").post(dobRegisterUser)
+router.route("/verify-otp").post(verifyOtp)
 
 //secured
 router.route("/logout").post(verifyJWT, logoutUser);

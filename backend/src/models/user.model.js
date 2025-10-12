@@ -30,6 +30,9 @@ const userSchema = new mongoose.Schema(
       avatar: {
          type: String,
       },
+      dob: {
+         type: Date,
+      },
       bio: {
          type: String,
       },
@@ -39,11 +42,16 @@ const userSchema = new mongoose.Schema(
       },
       followersCount: {
          type: Number,
-         default:0
+         default: 0,
       },
       followingCount: {
          type: Number,
-         default:0
+         default: 0,
+      },
+      status: {
+         type: String,
+         enum: ["pending", "active"],
+         default: "pending",
       },
       isPrivate: {
          type: Boolean,
@@ -74,8 +82,10 @@ const userSchema = new mongoose.Schema(
          type: String,
       },
       emailVerificationExpiry: {
-         type: String,
+         type: Date,
       },
+      otp: { type: String },
+      otpExpiry: { type: Date },
    },
    { timestamps: true }
 );
@@ -132,5 +142,12 @@ userSchema.methods.generateTemporaryToken = function () {
 
    return { hashedToken, unhashedToken, tokenExpiry };
 };
+
+userSchema.methods.generateOtp = function (){
+   const otp = crypto.randomInt(100000, 1000000).toString()
+   const otpExpiry = Date.now() + 20 * 60 * 1000 // 20 mins
+
+   return {otp,otpExpiry}
+}
 
 export const User = mongoose.model("User", userSchema);
