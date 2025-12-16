@@ -105,13 +105,13 @@ const dobRegisterUser = asyncHandler(async (req, res) => {
    const { userId } = req.params;
    const { dob } = req.body;
    const dobIso = new Date(dob);
-   const user = await User.findById(userId)
+   const user = await User.findById(userId);
 
    if (!user) {
       throw new ApiError(500, "Something went wrong while updating dob");
    }
 
-   const {otp,otpExpiry} = user.generateOtp()
+   const { otp, otpExpiry } = user.generateOtp();
 
    user.dob = dob;
    user.otp = otp;
@@ -122,15 +122,14 @@ const dobRegisterUser = asyncHandler(async (req, res) => {
    await sendEmail({
       email: user.email,
       subject: "Please verify your email",
-      mailgenContent: emailOtpVerificationMailgenContent(
-         user.username,
-         otp
-      ),
+      mailgenContent: emailOtpVerificationMailgenContent(user.username, otp),
    });
 
    return res
       .status(200)
-      .json(new ApiResponse(200, user, "Dob updated and OTP sent successfully"));
+      .json(
+         new ApiResponse(200, user, "Dob updated and OTP sent successfully")
+      );
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -140,7 +139,7 @@ const loginUser = asyncHandler(async (req, res) => {
       throw new ApiError(400, "All fields are required");
    }
 
-   const user = await User.findOne({ email:email });
+   const user = await User.findOne({ email: email });
 
    if (!user) {
       throw new ApiError(404, "User does not exist");
@@ -148,7 +147,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
    const isPasswordValid = await user.isPasswordCorrect(password);
    console.log(isPasswordValid);
-   
+
    if (!isPasswordValid) {
       throw new ApiError(404, "Invalid user credentials");
    }
@@ -280,11 +279,11 @@ const verifyEmail = asyncHandler(async (req, res) => {
       );
 });
 
-const verifyOtp = asyncHandler(async (req,res) => {
-   const {otp} = req.body
+const verifyOtp = asyncHandler(async (req, res) => {
+   const { otp } = req.body;
 
-   if(!otp){
-      throw new ApiError(400,"OTP is required")
+   if (!otp) {
+      throw new ApiError(400, "OTP is required");
    }
 
    const user = await User.findOne({
@@ -304,11 +303,11 @@ const verifyOtp = asyncHandler(async (req,res) => {
    return res
       .status(200)
       .json(new ApiResponse(200, user, "OTP verified successfully"));
-      
-
-})
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
+   console.log("refreshToken ran");
+
    const incomingRefreshToken =
       req.cookies.refreshToken || req.body.refreshToken;
    if (!incomingRefreshToken) {
@@ -428,6 +427,54 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, {}, "Password changed successfully"));
 });
 
+const changeAvatar = asyncHandler(async (req, res) => {
+   const avatarLocalPath = req.file?.path;
+
+   if (!avatarLocalPath) {
+      throw new ApiError(400, "Avatar file is missing");
+   }
+
+   const avatar = await uploadOnCloudinary(avatarLocalPath);
+   if (!avatar.url) {
+      throw new ApiError(400, "Error while uploading on cloudinary");
+   }
+
+   const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+         $set: {
+            avatar: avatar.url,
+         },
+      },
+      { new: true }     
+   ).select(
+      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
+   );
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, user, "avatar image updated successfully"));
+});
+
+const removeAvatar = asyncHandler(async (req, res) => {
+
+   const user = await User.findByIdAndUpdate(
+      req.user?._id,
+      {
+         $set:{
+            avatar: ""
+         }
+      },
+      {new:true}
+   ).select(
+      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry")
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, user, "avatar image removed successfully"));
+
+});
+
 // const getCurrentUser = asyncHandler(async (req,res) => {
 
 // })
@@ -445,4 +492,5 @@ export {
    forgotPasswordRequest,
    resetForgotPassword,
    changeCurrentPassword,
+   changeAvatar,
 };

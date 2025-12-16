@@ -36,6 +36,9 @@ const userSchema = new mongoose.Schema(
       bio: {
          type: String,
       },
+      gender: {
+         type: String,
+      },
       password: {
          type: String,
          required: [true, "Password is required"],
@@ -143,11 +146,11 @@ userSchema.methods.generateTemporaryToken = function () {
    return { hashedToken, unhashedToken, tokenExpiry };
 };
 
-userSchema.methods.generateOtp = function (){
-   const otp = crypto.randomInt(100000, 1000000).toString()
-   const otpExpiry = Date.now() + 20 * 60 * 1000 // 20 mins
+userSchema.methods.generateOtp = function () {
+   const otp = crypto.randomInt(100000, 1000000).toString();
+   const otpExpiry = Date.now() + 20 * 60 * 1000; // 20 mins
 
-   return {otp,otpExpiry}
-}
+   return { otp, otpExpiry };
+};
 
 export const User = mongoose.model("User", userSchema);

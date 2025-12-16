@@ -20,7 +20,6 @@ import { Label } from "@/components/ui/label";
 function ForgotPassword() {
 
     const navigate = useNavigate()
-
   const [dialogOpen, setDialogOpen] = useState(false);
   return (
     <>

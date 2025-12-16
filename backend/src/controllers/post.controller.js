@@ -21,9 +21,9 @@ const uploadPost = asyncHandler(async (req, res) => {
    const post = await Post.create({
       caption: caption ? caption : "",
       location: location ? location : "",
+      mentions: mentions ? mentions : undefined,
       owner: req.user?._id,
       media: urls,
-      mentions: mentions,
    });
 
    const createdPost = await Post.findById(post._id);

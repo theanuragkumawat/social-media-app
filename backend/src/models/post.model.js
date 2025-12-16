@@ -5,7 +5,6 @@ const postSchema = new mongoose.Schema(
   {
     caption: {
       type: String,
-      required: true,
       trim: true,
     },
     owner: {

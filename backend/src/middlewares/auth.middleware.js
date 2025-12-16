@@ -6,6 +6,10 @@ import jwt from "jsonwebtoken"
 
 const verifyJWT = asyncHandler(async (req,res,next) => {
 
+    try {
+        
+    
+
     const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
 
     if(!token){
@@ -22,6 +26,15 @@ const verifyJWT = asyncHandler(async (req,res,next) => {
 
     req.user = user
     next()
+    } catch (error) {
+        // If the error is already an ApiError (thrown by us above), pass it through
+        if (error instanceof ApiError) {
+             throw error; 
+        }
+        
+        // If it's a JWT specific error (expired, malformed), throw 401
+        throw new ApiError(401, error?.message || "Invalid access token")
+    }
 })
 
 export {verifyJWT}
