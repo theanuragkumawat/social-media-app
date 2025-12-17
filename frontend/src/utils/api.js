@@ -20,17 +20,17 @@ const processQueue = (error, token = null) => {
 };
 // -----------------------------------------
 
-axiosInstance.interceptors.request.use(
-  function (req) {
-    console.log("Requset Interceptor ran");
-    // console.log(req);
-    return req;
-  },
-  function (error) {
-    // request error
-    return Promise.reject(error);
-  }
-);
+// axiosInstance.interceptors.request.use(
+//   function (req) {
+//     console.log("Requset Interceptor ran");
+//     // console.log(req);
+//     return req;
+//   },
+//   function (error) {
+//     // request error
+//     return Promise.reject(error);
+//   }
+// );
 
 axiosInstance.interceptors.response.use(
   function (res) {

@@ -20,13 +20,36 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router";
+import { useEffect } from "react";
+import { getUserProfile } from "../utils/config";
+import { useSelector, useDispatch } from "react-redux";
+import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 
 function Profile() {
+  const dispatch = useDispatch();
+  
+  const getUserProfileInfo = async () => {
+    try {
+      const response = await getUserProfile();
+      if (response) {
+        dispatch(storeLogin(response.data.data));
+        console.log(response.data.data);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  
+  useEffect(() => {
+    getUserProfileInfo();
+  }, []);
+  
+  const userData = useSelector(state => state.auth.userData);
   return (
     <>
       <div className="col-span-12  md:col-span-10 md:col-start-3 lg:col-span-9 lg:col-start-4 xl:col-span-10 xl:col-start-3 mt-4">
         <div className="flex justify-center items-center   flex-col w-full">
-          <UserOwnProfile />
+          <UserOwnProfile userData={userData} />
         </div>
         <UserUploads />
       </div>
@@ -34,14 +57,18 @@ function Profile() {
   );
 }
 
-const UserOwnProfile = function () {
+const UserOwnProfile = function ({userData}) {
   return (
     <>
       <div className="flex flex-row mt-6 gap-6 sm:w-xl">
         <div className="active:scale-97 cursor-pointer flex justify-center lg:items-center flex-shrink-0 ">
           <div className="ring-3 ring-rose-600 ring-offset-4 ring-offset-neutral-950 rounded-full size-20 md:size-30 lg:size-40 object-cover  flex-[0_0_5rem] md:flex-[0_0_7.5rem] lg:flex-[0_0_10rem]">
             <img
-              src="https://images.unsplash.com/photo-1696834137457-8872b6c525f4?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=870"
+              src={
+                userData && userData.avatar && userData.avatar != ""
+                  ? userData.avatar
+                  : "https://www.shutterstock.com/image-vector/default-avatar-profile-icon-transparent-600nw-2534623311.jpg"
+              }
               className="w-full h-full rounded-full object-cover"
             />
           </div>
@@ -49,28 +76,24 @@ const UserOwnProfile = function () {
         <div>
           <div className="flex flex-col mb-3">
             <h2 className="text-md font-bold sm:text-2xl sm:font-extrabold mb-1 dark:text-white">
-              pankajtripathi
+              {userData ? userData?.username : "username"}
             </h2>
-            <h3 className="hidden sm:block text-sm mb-2">Pankaj Tripathi</h3>
+            <h3 className="hidden sm:block text-sm mb-2">{userData ? userData?.fullname : "Full name"}</h3>
             <div className="flex flex-row gap-4 text-sm">
               <p className="">
                 <span className="font-semibold text-sm">567</span> posts
               </p>
               <p className="cursor-pointer active:dark:text-neutral-400">
-                <span className="font-semibold text-sm ">2.3M</span> followers
+                <span className="font-semibold text-sm ">{userData ? userData.followersCount : "1"}</span> followers
               </p>
               <p className="cursor-pointer active:dark:text-neutral-400">
-                <span className="font-semibold text-sm ">223</span> following
+                <span className="font-semibold text-sm ">{userData ? userData.followingCount : "1"}</span> following
               </p>
             </div>
           </div>
           <div className="hidden lg:block">
-            <p className="!whitespace-pre-line text-sm">
-              {`Creator/Actor/Storyteller
-            @dollywoodfilums ✨
-            Face p-3
-            Visible WhiteO2 Thank You For Coming, Bhaag Beanie Bhaag-Netflix
-            dollysinghwork@gmail.com`}
+            <p className="!whitespace-pre-line text-sm">  
+              {`${userData ? userData.bio : ""}`}
             </p>
 
             <p className="text-sm mt-1.5">
@@ -82,16 +105,12 @@ const UserOwnProfile = function () {
       </div>
 
       <div className=" flex lg:hidden  flex-col sm:w-xl mt-6">
-        <h3 className="sm:hidden text-sm mb-1 font-bold w-fit">
-          Pankaj Tripathi
+        <h3 className="sm:hidden text-sm mb-1 font-bold w-fit"> 
+          {userData ? userData?.fullname : "Full name"}
         </h3>
-        <p className="!whitespace-pre-line text-sm">
-          {`Creator/Actor/Storyteller
-            @dollywoodfilums ✨
-            Face p-3
-            Visible WhiteO2 Thank You For Coming, Bhaag Beanie Bhaag-Netflix
-            dollysinghwork@gmail.com`}
-        </p>
+        <p className="!whitespace-pre-line text-sm">  
+              {`${userData ? userData.bio : ""}`}
+            </p>
 
         <p className="text-sm mt-1.5">
           Followed by <span className="font-bold">rjabhinavv, jitendrak1</span>{" "}
@@ -100,7 +119,10 @@ const UserOwnProfile = function () {
       </div>
 
       <div className="flex flex-row w-full gap-1.5 mt-6 max-w-xl">
-        <Link to="/accounts/edit" className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full flex justify-center items-center">
+        <Link
+          to="/accounts/edit"
+          className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full flex justify-center items-center"
+        >
           Edit Profile
         </Link>
         <button className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">

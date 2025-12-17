@@ -446,7 +446,7 @@ const changeAvatar = asyncHandler(async (req, res) => {
             avatar: avatar.url,
          },
       },
-      { new: true }     
+      { new: true }
    ).select(
       "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
    );
@@ -457,22 +457,62 @@ const changeAvatar = asyncHandler(async (req, res) => {
 });
 
 const removeAvatar = asyncHandler(async (req, res) => {
-
    const user = await User.findByIdAndUpdate(
       req.user?._id,
       {
-         $set:{
-            avatar: ""
-         }
+         $set: {
+            avatar: "",
+         },
       },
-      {new:true}
+      { new: true }
    ).select(
-      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry")
+      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
+   );
 
    return res
       .status(200)
       .json(new ApiResponse(200, user, "avatar image removed successfully"));
+});
 
+const getUserProfile = asyncHandler(async (req,res) => {
+   const userId = req.user?._id
+   
+   const user = await User.findById(userId)
+
+   if(!user){
+      throw new ApiError(404, "User not found");
+   }
+
+   return res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
+
+})
+
+const changeProfileDetails = asyncHandler(async (req, res) => {
+   const {bio, website,  gender } = req.body;
+
+   const userId = req.user?._id;
+
+   const user = await User.findByIdAndUpdate(
+      userId,
+      {
+         $set: {
+            website: website,
+            bio: bio,
+            gender: gender,
+         },
+      },
+      { new: true }
+   ).select(
+      "-password -refreshToken -emailVerificationToken -emailVerificationExpiry -forgotPasswordToken -forgotPasswordExpiry"
+   );
+
+   if (!user) {
+      throw new ApiError(500, "Something went wrong while updating profile");
+   }
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
 // const getCurrentUser = asyncHandler(async (req,res) => {
@@ -493,4 +533,7 @@ export {
    resetForgotPassword,
    changeCurrentPassword,
    changeAvatar,
+   removeAvatar,
+   getUserProfile,
+   changeProfileDetails,
 };

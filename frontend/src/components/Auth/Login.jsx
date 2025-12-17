@@ -18,7 +18,6 @@ function Login() {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
   } = useForm();
   const [error, setError] = useState("");
   const [isloading, setIsLoading] = useState(false);

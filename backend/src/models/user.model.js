@@ -36,6 +36,15 @@ const userSchema = new mongoose.Schema(
       bio: {
          type: String,
       },
+      website: {
+         type: String,
+         trim: true,
+         lowercase: true,
+         match: [
+            /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/,
+            "Please enter a valid website URL",
+         ],
+      },
       gender: {
          type: String,
       },

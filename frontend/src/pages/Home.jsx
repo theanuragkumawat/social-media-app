@@ -76,7 +76,6 @@ function Home() {
   const dispatch = useDispatch();
   const { isLoggedIn, userData } = useSelector((state) => state.auth);
 
-  
     const getUser = async () => {
         try {
           const response = await getCurrentUser();
@@ -88,13 +87,11 @@ function Home() {
           console.log(error);
         }
       };
+
     useEffect(() => {
-      
       getUser();
     }, []);
   
-
-
   const [activeDialog, setActiveDialog] = useState(null);
   console.log(activeDialog);
 
