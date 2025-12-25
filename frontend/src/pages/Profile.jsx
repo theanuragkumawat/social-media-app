@@ -1,4 +1,6 @@
-import React from "react";
+import { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Link } from "react-router";
 import {
   ChevronDown,
   Clapperboard,
@@ -10,7 +12,6 @@ import {
   UserPlus,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import {
   Carousel,
   CarouselContent,
@@ -19,45 +20,46 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
-import { Link } from "react-router";
-import { useEffect } from "react";
+
 import { getUserProfile } from "../utils/config";
-import { useSelector, useDispatch } from "react-redux";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
+import { useGetAllUserPostsQuery } from "../store/api/apiSlice.js";
 
 function Profile() {
   const dispatch = useDispatch();
-  
+
   const getUserProfileInfo = async () => {
     try {
       const response = await getUserProfile();
       if (response) {
         dispatch(storeLogin(response.data.data));
-        console.log(response.data.data);
+        // console.log(response.data.data);
       }
     } catch (error) {
       console.log(error);
     }
   };
-  
+
   useEffect(() => {
     getUserProfileInfo();
   }, []);
-  
-  const userData = useSelector(state => state.auth.userData);
+
+  const userData = useSelector((state) => state.auth.userData);
   return (
     <>
       <div className="col-span-12  md:col-span-10 md:col-start-3 lg:col-span-9 lg:col-start-4 xl:col-span-10 xl:col-start-3 mt-4">
         <div className="flex justify-center items-center   flex-col w-full">
           <UserOwnProfile userData={userData} />
         </div>
-        <UserUploads />
+        {userData?._id && (
+          <UserUploads userId={userData._id} totalPosts={userData.postsCount} />
+        )}
       </div>
     </>
   );
 }
 
-const UserOwnProfile = function ({userData}) {
+const UserOwnProfile = function ({ userData }) {
   return (
     <>
       <div className="flex flex-row mt-6 gap-6 sm:w-xl">
@@ -78,21 +80,32 @@ const UserOwnProfile = function ({userData}) {
             <h2 className="text-md font-bold sm:text-2xl sm:font-extrabold mb-1 dark:text-white">
               {userData ? userData?.username : "username"}
             </h2>
-            <h3 className="hidden sm:block text-sm mb-2">{userData ? userData?.fullname : "Full name"}</h3>
+            <h3 className="hidden sm:block text-sm mb-2">
+              {userData ? userData?.fullname : "Full Name"}
+            </h3>
             <div className="flex flex-row gap-4 text-sm">
               <p className="">
-                <span className="font-semibold text-sm">567</span> posts
+                <span className="font-semibold text-sm">
+                  {userData ? userData.postsCount : "zero"}
+                </span>{" "}
+                posts
               </p>
               <p className="cursor-pointer active:dark:text-neutral-400">
-                <span className="font-semibold text-sm ">{userData ? userData.followersCount : "1"}</span> followers
+                <span className="font-semibold text-sm ">
+                  {userData ? userData.followersCount : "0"}
+                </span>{" "}
+                followers
               </p>
               <p className="cursor-pointer active:dark:text-neutral-400">
-                <span className="font-semibold text-sm ">{userData ? userData.followingCount : "1"}</span> following
+                <span className="font-semibold text-sm ">
+                  {userData ? userData.followingCount : "0"}
+                </span>{" "}
+                following
               </p>
             </div>
           </div>
           <div className="hidden lg:block">
-            <p className="!whitespace-pre-line text-sm">  
+            <p className="!whitespace-pre-line text-sm">
               {`${userData ? userData.bio : ""}`}
             </p>
 
@@ -105,12 +118,12 @@ const UserOwnProfile = function ({userData}) {
       </div>
 
       <div className=" flex lg:hidden  flex-col sm:w-xl mt-6">
-        <h3 className="sm:hidden text-sm mb-1 font-bold w-fit"> 
+        <h3 className="sm:hidden text-sm mb-1 font-bold w-fit">
           {userData ? userData?.fullname : "Full name"}
         </h3>
-        <p className="!whitespace-pre-line text-sm">  
-              {`${userData ? userData.bio : ""}`}
-            </p>
+        <p className="!whitespace-pre-line text-sm">
+          {`${userData ? userData.bio : ""}`}
+        </p>
 
         <p className="text-sm mt-1.5">
           Followed by <span className="font-bold">rjabhinavv, jitendrak1</span>{" "}
@@ -176,16 +189,34 @@ const UserOwnProfile = function ({userData}) {
   );
 };
 
-function UserUploads() {
+function UserUploads({ userId, totalPosts }) {
+  const [activeTab, setActiveTab] = useState("post");
+  const [page, setPage] = useState(1);
+  const { data, isLoading, isFetching } = useGetAllUserPostsQuery({
+    userId,
+    type: activeTab,
+    page,
+  });
+
+  const posts = data?.data || []; 
+  // const hasMore = data?.hasMore;
+  const hasMore = page * 5 < totalPosts;
+  // console.log(data);
+
   return (
     <div className="mt-8 w-full lg:px-10 xl:px-30 2xl:px-50">
-      <Tabs defaultValue="posts" className={"w-full bg-transparent"}>
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value)}
+        defaultValue="post"
+        className={"w-full bg-transparent"}
+      >
         <TabsList className={"w-xs sm:w-sm md:w-md mx-auto bg-transparent"}>
           <TabsTrigger
             className={
               "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
             }
-            value="posts"
+            value="post"
           >
             <div className="flex flex-col justify-center">
               <p>
@@ -198,7 +229,7 @@ function UserUploads() {
             className={
               "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
             }
-            value="reels"
+            value="reel"
           >
             <div className="flex flex-col justify-center">
               <p>
@@ -221,47 +252,31 @@ function UserUploads() {
             </div>
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="posts" className={" w-full"}>
+        <TabsContent value="post" className={" w-full"}>
           <>
             <h2 className="text-center font-bold">Posts</h2>
-            <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5">
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1696834137467-e1827c4e400e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170"
-                }
-              />
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1760720232713-a60c6a8fb981?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=715"
-                }
-              />
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1760715658357-57df8f045b8e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
-                }
-              />
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1760681554254-f8e6f8e2f482?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
-                }
-              />
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1760648149145-560e619098ef?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
-                }
-              />
-              <PostCard
-                url={
-                  "https://images.unsplash.com/photo-1760696156052-71af50b8b269?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=690"
-                }
-              />
-              <PostCard
-                url={`https://images.unsplash.com/photo-1664651205193-bfb6bfdd3b09?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470`}
-              />
+            <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5 rounded-md overflow-hidden">
+              {posts?.map((item) => (
+                <PostCard
+                  totalComments={item.totalComments}
+                  totalLikes={item.totalLikes}
+                  key={item._id}
+                  url={item.media[0]}
+                />
+              ))}
             </div>
+            {hasMore && (
+              <button
+                onClick={() => setPage((prev) => prev + 1)}
+                disabled={isFetching}
+                className="mt-4 px-4 py-2 text-black bg-gray-100 rounded hover:bg-gray-200 w-full"
+              >
+                {isFetching || isLoading? "Loading more..." : "Load More"}
+              </button>
+            )}
           </>
         </TabsContent>
-        <TabsContent value="reels" className={"border-1 border-amber-600"}>
+        <TabsContent value="reel" className={"border-1 border-amber-600"}>
           <>
             <h2 className="text-center font-bold">Reels</h2>
             <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-5 gap-0.5">
@@ -318,20 +333,20 @@ function UserUploads() {
   );
 }
 
-function PostCard({ url }) {
+function PostCard({ url, totalLikes, totalComments }) {
   return (
     <>
       <div className="relative overflow-hidden group cursor-pointer">
-        <img className="object-cover aspect-9/11" src={url} />
+        <img className="object-cover aspect-9/11 size-full" src={url} />
 
         <p></p>
-        <div className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/50 active:bg-black/70">
+        <div className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/70 active:bg-black/80">
           <div className="flex justify-center items-center gap-4.5 h-full">
             <div className="flex flex-row gap-1">
-              <Heart fill="currentColor" /> <span>912</span>
+              <Heart fill="currentColor" /> <span>{totalLikes}</span>
             </div>
             <div className="flex flex-row gap-1">
-              <MessageCircle fill="currentColor" /> <span>45</span>
+              <MessageCircle fill="currentColor" /> <span>{totalComments}</span>
             </div>
           </div>
         </div>

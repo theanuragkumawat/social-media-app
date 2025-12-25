@@ -4,9 +4,10 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { Post } from "../models/post.model.js";
 import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 
 const uploadPost = asyncHandler(async (req, res) => {
-   const { caption, location, mentions } = req.body;
+   const { type = "post", caption, location, mentions } = req.body;
 
    const urls = [];
    for (const file of req.files) {
@@ -24,7 +25,19 @@ const uploadPost = asyncHandler(async (req, res) => {
       mentions: mentions ? mentions : undefined,
       owner: req.user?._id,
       media: urls,
+      type: type
    });
+
+   if (post) {
+      await User.updateOne(
+         { _id: req.user?._id },
+         {
+            $inc: {
+               postsCount: 1,
+            },
+         }
+      );
+   }
 
    const createdPost = await Post.findById(post._id);
 
@@ -117,18 +130,21 @@ const getPostById = asyncHandler(async (req, res) => {
 
 const getAllUserPosts = asyncHandler(async (req, res) => {
    const { userId } = req.params;
+   const type = req.query.type
    const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
-   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 10;
+   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
    const skip = (page - 1) * limit;
 
    if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "userId is not valid");
    }
+console.log(req.query.type,typeof req.query.type);
 
    const posts = await Post.aggregate([
       {
          $match: {
             owner: new mongoose.Types.ObjectId(userId),
+            type:type
          },
       },
       {
@@ -183,6 +199,17 @@ const deletePost = asyncHandler(async (req, res) => {
 
    const post = await Post.findByIdAndDelete(postId);
 
+   if (post) {
+      await User.updateOne(
+         { _id: req.user?._id },
+         {
+            $inc: {
+               postsCount: -1,
+            },
+         }
+      );
+   }
+
    if (!post) {
       throw new ApiError(500, "Something went wrong while deleting post");
    }
@@ -192,21 +219,44 @@ const deletePost = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, post, "Post deleted successfully"));
 });
 
-const togglePostStatus = asyncHandler(async (req,res) => {
+const togglePostStatus = asyncHandler(async (req, res) => {
+   const { postId } = req.params;
 
-    const {postId} = req.params
-
-    if (!mongoose.Types.ObjectId.isValid(postId)) {
+   if (!mongoose.Types.ObjectId.isValid(postId)) {
       throw new ApiError(400, "postId is not valid");
    }
-   
-   const post = await Post.findById(postId)
 
-   post.status = post.status == "public" ? "archive" : "public"
-   const updatedPost = await post.save({ validateBeforeSave: false })
+   const post = await Post.findById(postId);
 
-   return res.status(200).json(new ApiResponse(200, updatedPost,"Post toggle status successfully"))
+   // post.status = post.status == "public" ? "archive" : "public";
+   if(post.status == "public"){
+      post.status = "archive"
+      await User.updateOne(
+         { _id: req.user?._id },
+         { $inc: { postsCount: -1 } }
+      )
+   } else {
+      post.status = "public"
+      await User.updateOne(
+         { _id: req.user?._id },
+         { $inc: { postsCount: 1 } }
+      )
+   }
 
-})
+   const updatedPost = await post.save({ validateBeforeSave: false });
 
-export { uploadPost, getPostById, getAllUserPosts, updatePost, deletePost,togglePostStatus };
+   return res
+      .status(200)
+      .json(
+         new ApiResponse(200, updatedPost, "Post toggle status successfully")
+      );
+});
+
+export {
+   uploadPost,
+   getPostById,
+   getAllUserPosts,
+   updatePost,
+   deletePost,
+   togglePostStatus,
+};

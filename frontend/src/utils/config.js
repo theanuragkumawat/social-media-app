@@ -91,4 +91,22 @@ const getUserProfile = async function () {
   }
 };
 
-export { createPost, changeAvatar, removeAvatar,updateProfile,getUserProfile };
+const createStory = async function (formData) {
+  try {
+    const response = await axios({
+      url: "/stories",
+      method: "post",
+      withCredentials: true,
+      data:formData,
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { createPost, changeAvatar, removeAvatar,updateProfile,getUserProfile,createStory };

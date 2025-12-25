@@ -25,7 +25,7 @@ const createStory = asyncHandler(async (req, res) => {
 
    const story = await Story.create({
       media: media.url,
-      mentions: mentions,
+      mentions: mentions ? mentions : undefined,
       owner: req.user?._id,
    });
 
@@ -70,40 +70,42 @@ const getAllFeedStories = asyncHandler(async (req, res) => {
             "userStories.0": { $exists: true },
          },
       },
-        {
-            $lookup: {
-                from: "users",
-                foreignField: "_id",
-                localField: "followee",
-                as: "ownerInfo",
-                pipeline: [
-                    {
-                        $project: {
-                            username: 1,
-                            avatar: 1,
-                            fullname: 1,
-                        },
-                    },
-                ],
-            },
-        },
-        {
-            $project: {
-                _id: 0, // Exclude the default _id
-                user: { $first: "$ownerInfo" }, // Convert the single-element ownerInfo array into an object
-                stories: "$userStories",
-            },
-        },
+      {
+         $lookup: {
+            from: "users",
+            foreignField: "_id",
+            localField: "followee",
+            as: "ownerInfo",
+            pipeline: [
+               {
+                  $project: {
+                     username: 1,
+                     avatar: 1,
+                     fullname: 1,
+                  },
+               },
+            ],
+         },
+      },
+      {
+         $project: {
+            _id: 0, // Exclude the default _id
+            user: { $first: "$ownerInfo" }, // Convert the single-element ownerInfo array into an object
+            stories: "$userStories",
+         },
+      },
    ]);
 
-    if (!stories) {
-        throw new ApiError(500, "Something went wrong while fetching the story feed");
-    }
+   if (!stories) {
+      throw new ApiError(
+         500,
+         "Something went wrong while fetching the story feed"
+      );
+   }
 
-    return res
-        .status(200)
-        .json(new ApiResponse(200, stories, "Story feed fetched successfully"));
-
+   return res
+      .status(200)
+      .json(new ApiResponse(200, stories, "Story feed fetched successfully"));
 });
 
 const getUserStories = asyncHandler(async (req, res) => {
@@ -230,4 +232,10 @@ const viewStory = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, null, "Story view recorded successfully"));
 });
 
-export { createStory, getUserStories, deleteStory, viewStory,getAllFeedStories };
+export {
+   createStory,
+   getUserStories,
+   deleteStory,
+   viewStory,
+   getAllFeedStories,
+};

@@ -15,6 +15,14 @@ import {
   Images,
   Loader,
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Link, NavLink } from "react-router";
 import { GoHome, GoHomeFill } from "react-icons/go";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
@@ -48,7 +56,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
-import { createPost } from "../utils/config";
+import { createPost, createStory } from "../utils/config";
 
 function Navbar() {
   const navItems = [
@@ -112,16 +120,16 @@ function Navbar() {
       to: "/more",
     },
   ];
+
+  const [isSearchSheetOpen,setIsSearchSheetOpen] = useState(false)
   const { isLoggedIn, userData } = useSelector((state) => state.auth);
 
   const [activeDialog, setActiveDialog] = useState(null);
 
   return (
     <>
-    
-    <div className="hidden lg:block lg:col-span-2" ></div>
-    
-      <div className="left-part hidden md:block border-r h-screen pt-4 box-border fixed lg:w-[16.6667%]" >
+      <div className="hidden lg:block lg:col-span-2"></div>
+      <div className="left-part hidden md:block border-r h-screen pt-4 box-border fixed lg:w-[16.6667%]">
         <div className="pl-2 pr-2 lg:pl-4 mt-7">
           <div>
             <h2 className="ml-2 text-3xl font-anuraga font-medium hidden lg:block">
@@ -136,105 +144,168 @@ function Navbar() {
             >
               <h2 className="text-3xl font-anuraga font-medium lg:hidden">S</h2>
             </NavLink>
+
             {navItems.map((item) => {
-              return (
-                <DropdownMenu key={item.name}>
-                  <DropdownMenuTrigger
-                    asChild
-                    className={"active:scale-96 rounded-xl px-2"}
-                  >
-                    <NavLink
+              if (item.to == "/create") {
+                return (
+                      <div key={item.name} className="active:scale-96 rounded-xl px-2 cursor-pointer">
+                        <DropdownMenu >
+                          <DropdownMenuTrigger
+                            asChild
+                            className={"active:scale-96 rounded-xl px-2"}
+                          >
+                            <div
+                              key={item.name}
+                              className={
+                                "flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2"
+                              }
+                            >
+                              <>
+                                <div className="">
+                                  {true ? (
+                                    <item.fillIcon className="size-6.5 box-border" />
+                                  ) : (
+                                    <item.icon className="size-6.5 box-border" />
+                                  )}
+                                </div>
+                                <h3
+                                  className={`${
+                                    true ? "font-bold" : ""
+                                  } text-md hidden lg:block`}
+                                >
+                                  {item.name}
+                                </h3>
+                              </>
+                            </div>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            className={"w-45 p-1.5 rounded-sm "}
+                          >
+                            <DropdownMenuItem
+                              className={"h-10 "}
+                              onSelect={() =>
+                                activeDialog == null && setActiveDialog("post")
+                              }
+                            >
+                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                                <span>Post</span>
+                                <span className="flex justify-center items-center">
+                                  <ImagePlay
+                                    className="dark:text-neutral-50 size-5"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className={"h-10"}
+                              onSelect={() => setActiveDialog("story")}
+                            >
+                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                                <span>Story</span>
+                                <span className="flex justify-center items-center">
+                                  <Aperture
+                                    className="dark:text-neutral-50 size-5"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className={"h-10"}
+                              onSelect={() => setActiveDialog("reel")}
+                            >
+                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                                <span>Reel</span>
+                                <span className="flex justify-center items-center">
+                                  <Clapperboard
+                                    className="dark:text-neutral-50 size-5"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                              </div>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className={"h-10"}
+                              onSelect={() => setActiveDialog("live")}
+                            >
+                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                                <span>Live Video</span>
+                                <span className="flex justify-center items-center">
+                                  <Radio
+                                    className="dark:text-neutral-50 size-5"
+                                    strokeWidth={2}
+                                  />
+                                </span>
+                              </div>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                );
+              }
+
+              if (item.to == "/search") {
+                return (
+                    <div
+                    onClick={() => setIsSearchSheetOpen(!isSearchSheetOpen)}
                       key={item.name}
-                      to={item.to}
-                      className={({ isActive }) =>
-                        `${
-                          isActive ? "dark:text-neutral-50" : ""
-                        } flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2`
+                      className={
+                        "active:scale-96 rounded-xl px-2 cursor-pointer"
                       }
                     >
-                      {({ isActive }) => (
-                        <>
-                          <div className="">
-                            {isActive ? (
-                              <item.fillIcon className="size-6.5 box-border" />
-                            ) : (
-                              <item.icon className="size-6.5 box-border" />
-                            )}
-                          </div>
-                          <h3
-                            className={`${
-                              isActive ? "font-bold" : ""
-                            } text-md hidden lg:block`}
-                          >
-                            {item.name}
-                          </h3>
-                        </>
-                      )}
-                    </NavLink>
-                  </DropdownMenuTrigger>
-                  {item.to == "/create" && (
-                    <DropdownMenuContent className={"w-45 p-1.5 rounded-sm "}>
-                      <DropdownMenuItem
-                        className={"h-10 "}
-                        onSelect={() =>
-                          activeDialog == null && setActiveDialog("post")
-                        }
+                      <div
+                        className={`flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2 rounded-xl`}
                       >
-                        <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                          <span>Post</span>
-                          <span className="flex justify-center items-center">
-                            <ImagePlay
-                              className="dark:text-neutral-50 size-5"
-                              strokeWidth={2}
-                            />
-                          </span>
+                        <div className="">
+                          {true ? (
+                            <item.fillIcon className="size-6.5 box-border" />
+                          ) : (
+                            <item.icon className="size-6.5 box-border" />
+                          )}
                         </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className={"h-10"}
-                        onSelect={() => setActiveDialog("story")}
-                      >
-                        <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                          <span>Story</span>
-                          <span className="flex justify-center items-center">
-                            <Aperture
-                              className="dark:text-neutral-50 size-5"
-                              strokeWidth={2}
-                            />
-                          </span>
+                        <h3 className={`text-md hidden lg:block`}>
+                          {item.name}
+                        </h3>
+                      </div>
+                    </div>
+                );
+              }
+
+              return (
+                <div
+                  key={item.name}
+                  className={"active:scale-96 rounded-xl px-2"}
+                >
+                  <NavLink
+                    key={item.name}
+                    to={item.to}
+                    className={({ isActive }) =>
+                      `${
+                        isActive ? "dark:text-neutral-50" : ""
+                      } flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2 rounded-xl`
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        <div className="">
+                          {isActive ? (
+                            <item.fillIcon className="size-6.5 box-border" />
+                          ) : (
+                            <item.icon className="size-6.5 box-border" />
+                          )}
                         </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className={"h-10"}
-                        onSelect={() => setActiveDialog("reel")}
-                      >
-                        <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                          <span>Reel</span>
-                          <span className="flex justify-center items-center">
-                            <Clapperboard
-                              className="dark:text-neutral-50 size-5"
-                              strokeWidth={2}
-                            />
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className={"h-10"}
-                        onSelect={() => setActiveDialog("live")}
-                      >
-                        <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                          <span>Live Video</span>
-                          <span className="flex justify-center items-center">
-                            <Radio
-                              className="dark:text-neutral-50 size-5"
-                              strokeWidth={2}
-                            />
-                          </span>
-                        </div>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  )}
-                </DropdownMenu>
+                        <h3
+                          className={`${
+                            isActive ? "font-bold" : ""
+                          } text-md hidden lg:block`}
+                        >
+                          {item.name}
+                        </h3>
+                      </>
+                    )}
+                  </NavLink>
+                </div>
               );
             })}
 
@@ -247,54 +318,19 @@ function Navbar() {
             >
               <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0">
                 <PostWizard setActiveDialog={setActiveDialog} />
+                <DialogClose></DialogClose>
               </DialogContent>
             </Dialog>
+
             <Dialog
               modal={true} // low opacity black background
               open={activeDialog === "story"}
               className={"p-0"}
               // onOpenChange={(isOpen) => !isOpen && setActiveDialog(null)}
             >
-              <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0">
-                <XIcon
-                  className="right-0 top-0 absolute mr-2 mt-2 size-6"
-                  onClick={() => {
-                    setActiveDialog(null);
-                  }}
-                />
-                <DialogHeader className={"gap-0"}>
-                  <DialogTitle
-                    className={
-                      "text-center bg-neutral-950 py-2 rounded-t-3xl text-base"
-                    }
-                  >
-                    Create new Story
-                  </DialogTitle>
-                  <DialogDescription></DialogDescription>
-                  <div className={"text-center my-19"}>
-                    <div className="flex flex-col gap-4">
-                      <div className="flex justify-center items-center ">
-                        <Images
-                          className="dark:text-neutral-50"
-                          size={80}
-                          strokeWidth={0.9}
-                        />
-                      </div>
-                      <div>
-                        <h3 className=" dark:text-neutral-50 text-lg">
-                          Drag photos and videos here
-                        </h3>
-                      </div>
-                      <div>
-                        <button className="bg-sky-600 rounded-lg px-3 py-1.5 dark:text-neutral-50 text-sm font-semibold">
-                          Select from Device
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </DialogHeader>
-              </DialogContent>
+              <StoryUploadModal setActiveDialog={setActiveDialog} />
             </Dialog>
+
             <Dialog
               modal={true} // low opacity black background
               open={activeDialog === "reel"}
@@ -341,6 +377,7 @@ function Navbar() {
                 </DialogHeader>
               </DialogContent>
             </Dialog>
+
             <Dialog
               modal={true} // low opacity black background
               open={activeDialog === "live"}
@@ -388,14 +425,32 @@ function Navbar() {
               </DialogContent>
             </Dialog>
           </div>
-          <div></div>
         </div>
       </div>
-      
-   </>
+
+      {/* SEARCH SHEET */}
+      <Sheet
+      className={""}
+        open={isSearchSheetOpen}
+        onOpenChange={ () => setIsSearchSheetOpen(!isSearchSheetOpen)}
+        modal={false}
+      >
+        <SheetContent
+         side="left"
+         className={"[&>button:first-of-type]:hidden sm:min-w-[450px] bg-background shadow-none rounded-2xl"}
+        >
+          <SheetHeader>
+            <SheetTitle></SheetTitle>
+            <SheetDescription>
+            </SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
+//for posts
 function PostWizard({ setActiveDialog }) {
   const steps = ["Upload", "Details"];
   const [activeStep, setActiveStep] = useState(0);
@@ -404,22 +459,13 @@ function PostWizard({ setActiveDialog }) {
   const back = () => setActiveStep((prev) => prev - 1);
 
   const [files, setFiles] = useState([]);
-  console.log(files);
-
   const handleChange = (e) => {
     setFiles([...e.target.files]);
   };
+  // console.log(files);
 
   return (
     <>
-      {/* <Stepper activeStep={activeStep}>
-        {steps.map((label) => (
-          <Step key={label}>
-            <StepLabel>{label}</StepLabel>
-          </Step>
-        ))}
-      </Stepper> */}
-
       {activeStep === 0 && (
         <UploadStep
           onNext={next}
@@ -476,7 +522,7 @@ function UploadStep({
   return (
     <div className={`${isDragging ? "dark:bg-sky-800/20" : ""}  rounded-3xl`}>
       <XIcon
-        className="right-0 top-0 absolute mr-2 mt-2 size-6"
+        className="right-0 top-0 absolute mr-2 mt-2 size-6 cursor-pointer"
         onClick={() => {
           setActiveDialog(null);
         }}
@@ -522,7 +568,7 @@ function UploadStep({
                     onChange={handleChange}
                     className="hidden"
                   />
-                </div>  
+                </div>
                 <label
                   htmlFor="file-upload"
                   className=""
@@ -547,7 +593,7 @@ function UploadStep({
                     </h3>
                   </div>
                   <div className="mt-3 flex justify-center items-center">
-                    <p className="bg-sky-600 rounded-lg px-3 py-1.5 dark:text-neutral-50 text-sm font-semibold w-40 active:dark:scale-98 cursor-pointer">
+                    <p className="bg-sky-600 rounded-lg px-3 py-1.5 dark:text-neutral-50 text-sm font-semibold w-40 active:scale-98 cursor-pointer">
                       Select from Device
                     </p>
                   </div>
@@ -557,16 +603,21 @@ function UploadStep({
           )}
         </div>
         {files && files.length > 0 && (
-            <div className="flex justify-end">
-
-          <button
-            onClick={onNext}
-            disabled={false}
-            className={" hover:bg-transparent cursor-pointer w-fit pr-4 pb-2"}
+          <div className="flex justify-end">
+            <button
+              onClick={onNext}
+              disabled={false}
+              className={" hover:bg-transparent cursor-pointer w-fit pr-4 pb-2"}
             >
-            <span className={"dark:text-sky-500 text-sm hover:underline underline-offset-2"}>Next</span>
-          </button>
-              </div>
+              <span
+                className={
+                  "dark:text-sky-500 text-sm hover:underline underline-offset-2"
+                }
+              >
+                Next
+              </span>
+            </button>
+          </div>
         )}
       </DialogHeader>
     </div>
@@ -633,4 +684,132 @@ function DetailsStep({ onBack, files, setActiveDialog }) {
   );
 }
 
+//for story
+function StoryUploadModal({ setActiveDialog }) {
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [media, setMedia] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  // console.log(media?.type);
+
+  function handleMediaUpload(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMedia(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  }
+
+  async function handleCreateStory() {
+    setIsDisabled(true);
+    const formData = new FormData();
+    formData.append("media", media);
+    try {
+      const response = await createStory(formData);
+      if (response) {
+        console.log(response);
+
+        setActiveDialog(null);
+        setMedia(null);
+        setPreviewUrl(null);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsDisabled(false);
+    }
+  }
+
+  return (
+    <>
+      <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0">
+        <XIcon
+          className="right-0 top-0 absolute mr-2 mt-2 size-6 cursor-pointer"
+          onClick={() => {
+            setActiveDialog(null);
+          }}
+        />
+        <DialogHeader className={"gap-0"}>
+          <DialogTitle
+            className={
+              "text-center bg-neutral-950 py-2 rounded-t-3xl text-base"
+            }
+          >
+            Create new Story
+          </DialogTitle>
+          <DialogDescription></DialogDescription>
+          <div className={"text-center"}>
+            {!media ? (
+              <div className="my-19">
+                <input
+                  className="hidden"
+                  id="story-file"
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleMediaUpload}
+                />
+                <label htmlFor="story-file" className="text-center">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-center items-center ">
+                      <Images
+                        className="dark:text-neutral-50"
+                        size={80}
+                        strokeWidth={0.9}
+                      />
+                    </div>
+                    <div>
+                      <h3 className=" dark:text-neutral-50 text-lg">
+                        Drag photo and video here
+                      </h3>
+                    </div>
+                    <div className="flex justify-center">
+                      <p className="bg-sky-600 rounded-lg px-3 py-1.5 dark:text-neutral-50 text-sm font-semibold w-fit active:scale-97 cursor-pointer">
+                        Select from Device
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            ) : (
+              <>
+                {media && previewUrl && (
+                  <>
+                    <div>
+                      {media?.type.startsWith("image") ? (
+                        <div className="max-w-full flex items-center justify-center">
+                          <img
+                            src={previewUrl}
+                            className="object-contain max-h-90"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <video
+                            controls
+                            src={previewUrl}
+                            className="object-contain"
+                          ></video>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-3 text-end">
+                      <Button
+                        onClick={handleCreateStory}
+                        className={
+                          "text-sm font-semibold hover:underline underline-offset-2 dark:text-sky-500 cursor-pointer bg-transparent p-0 h-full hover:bg-transparent me-3 mb-3"
+                        }
+                        disabled={isDisabled}
+                      >
+                        Share
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </DialogHeader>
+      </DialogContent>
+    </>
+  );
+}
 export default Navbar;

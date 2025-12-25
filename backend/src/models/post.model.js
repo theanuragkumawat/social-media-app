@@ -11,6 +11,12 @@ const postSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    type: {
+      type: String,
+      enum: ["post", "reel"],
+      default: "post",
+      index: true, 
+    },
     media: [
       {
         type: String,

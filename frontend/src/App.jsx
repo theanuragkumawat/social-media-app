@@ -16,8 +16,26 @@ import Router from "./Routes/Router";
 import { useEffect } from "react";
 
 import { login as storeLogin } from "./store/Auth/AuthSlice.js";
+import { useDispatch } from "react-redux";
+import { getCurrentUser } from "./utils/auth.js";
 function App() {
- 
+ const dispatch = useDispatch()
+    const getUser = async () => {
+      try {
+        const response = await getCurrentUser();
+        if (response) {
+          console.log(response);
+          dispatch(storeLogin(response.data.data));
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+  
+    useEffect(() => {
+      getUser();
+    }, []);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <RouterProvider router={Router}></RouterProvider>
