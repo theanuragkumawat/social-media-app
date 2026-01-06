@@ -25,7 +25,7 @@ const uploadPost = asyncHandler(async (req, res) => {
       mentions: mentions ? mentions : undefined,
       owner: req.user?._id,
       media: urls,
-      type: type
+      type: type,
    });
 
    if (post) {
@@ -130,7 +130,7 @@ const getPostById = asyncHandler(async (req, res) => {
 
 const getAllUserPosts = asyncHandler(async (req, res) => {
    const { userId } = req.params;
-   const type = req.query.type
+   const type = req.query.type;
    const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
    const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
    const skip = (page - 1) * limit;
@@ -138,13 +138,49 @@ const getAllUserPosts = asyncHandler(async (req, res) => {
    if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "userId is not valid");
    }
-console.log(req.query.type,typeof req.query.type);
+   console.log(req.query.type, typeof req.query.type);
 
    const posts = await Post.aggregate([
       {
          $match: {
             owner: new mongoose.Types.ObjectId(userId),
-            type:type
+            type: type,
+         },
+      },
+      {
+         $lookup: {
+            from: "likes",
+            let: { postId: "$_id" },
+            pipeline: [
+               {
+                  $match: {
+                     $expr: {
+                        $and: [
+                           { $eq: ["$targetId", "$$postId"] },
+                           {
+                              $eq: [
+                                 "$likedBy",
+                                 new mongoose.Types.ObjectId(req.user?._id),
+                              ],
+                           },
+                        ],
+                     },
+                  },
+               },
+            ],
+            as: "userLike",
+         },
+      },
+      {
+         $addFields: {
+            hasLiked: {
+               $gt: [{ $size: "$userLike" }, 0],
+            },
+         },
+      },
+      {
+         $project: {
+            userLike: 0,
          },
       },
       {
@@ -229,18 +265,15 @@ const togglePostStatus = asyncHandler(async (req, res) => {
    const post = await Post.findById(postId);
 
    // post.status = post.status == "public" ? "archive" : "public";
-   if(post.status == "public"){
-      post.status = "archive"
+   if (post.status == "public") {
+      post.status = "archive";
       await User.updateOne(
          { _id: req.user?._id },
          { $inc: { postsCount: -1 } }
-      )
+      );
    } else {
-      post.status = "public"
-      await User.updateOne(
-         { _id: req.user?._id },
-         { $inc: { postsCount: 1 } }
-      )
+      post.status = "public";
+      await User.updateOne({ _id: req.user?._id }, { $inc: { postsCount: 1 } });
    }
 
    const updatedPost = await post.save({ validateBeforeSave: false });

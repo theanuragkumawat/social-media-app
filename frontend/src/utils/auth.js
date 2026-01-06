@@ -47,7 +47,6 @@ const getCurrentUser = async function () {
     const response = await axios({
       url: "/users/current-user",
       method: "post",
-      data: {},
       withCredentials: true,
       headers: {
         "Content-Type": "application/json",

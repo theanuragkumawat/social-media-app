@@ -58,7 +58,7 @@ const unlikePost = asyncHandler(async (req,res) => {
         throw new ApiError(500,"Something went wrong while unlike the post")
     }
 
-    return res.status(200).json(new ApiResponse(200,unlike,"Post liked successfully"))
+    return res.status(200).json(new ApiResponse(200,unlike,"Post unliked successfully"))
 
 })
 

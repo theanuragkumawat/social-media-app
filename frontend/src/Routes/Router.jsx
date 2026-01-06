@@ -1,5 +1,5 @@
 import { createBrowserRouter } from "react-router";
-import { ForgotPassword, Home, Login, Profile, Signup } from "../pages";
+import { ForgotPassword, Home, Login, UserProfile, SelfProfile, Signup,  } from "../pages";
 import Layout from "../components/Layout";
 import SettingsLayout from "../components/SettingsLayout";
 import EditProfile from "../components/Auth/EditProfile";
@@ -39,7 +39,11 @@ const Router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: <Profile />,
+        element: <SelfProfile />,
+      },
+      {
+        path: "/:username",
+        element: <UserProfile />,
       },
       {
         path: "/accounts",

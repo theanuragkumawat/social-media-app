@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { changeAvatar, changeCurrentPassword, changeProfileDetails, dobRegisterUser, forgotPasswordRequest, getCurrentUser, getUserProfile, loginUser, logoutUser, refreshAccessToken, registerUser, removeAvatar, resendEmailVerification, resetForgotPassword, verifyEmail, verifyOtp } from "../controllers/user.controller.js";
+import { changeAvatar, changeCurrentPassword, changeProfileDetails, dobRegisterUser, forgotPasswordRequest, getCurrentUser, getUserProfile, loginUser, logoutUser, refreshAccessToken, registerUser, removeAvatar, resendEmailVerification, resetForgotPassword, searchUsers, verifyEmail, verifyOtp } from "../controllers/user.controller.js";
 import { getAllUserPosts } from "../controllers/post.controller.js";
 import {
    userChangeCurrentPasswordValidator,
@@ -10,7 +10,7 @@ import {
    userResetForgotPasswordValidator,
 } from "../validators/index.js";
 import { validate } from "../middlewares/validator.middleware.js";
-import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { verifyJWT, verifyJWTOptional } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 // unsecured
@@ -28,16 +28,19 @@ router.route("/reset-password/:unHashedToken").post(userResetForgotPasswordValid
 router.route("/dob-register/:userId").post(dobRegisterUser)
 router.route("/verify-otp").post(verifyOtp)
 
+
 //secured
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/current-user").post(verifyJWT, getCurrentUser);
 router.route("/change-password").post(verifyJWT, userChangeCurrentPasswordValidator(),validate, changeCurrentPassword);
 router.route("/avatar").patch(verifyJWT,upload.single("avatar"),changeAvatar)
 router.route("/avatar").delete(verifyJWT,removeAvatar)
-router.route("/profile").get(verifyJWT,getUserProfile)
+router.route("/search-users").get(verifyJWT,searchUsers)
 router.route("/profile").patch(verifyJWT,changeProfileDetails)
 router.route("/resend-email-verification").post(verifyJWT,resendEmailVerification)
 
+//optional secured
+router.route("/profile/:username").get(verifyJWTOptional,getUserProfile)
 
 //posts
 // router.route("/:userId/posts").get(getAllUserPosts)

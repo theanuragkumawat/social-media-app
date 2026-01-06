@@ -33,6 +33,8 @@ import storyRouter from "./routes/story.route.js"
 
 //Routes
 app.use('/api/v1/healthcheck',healthCheckRouter);
+
+//user routes
 app.use('/api/v1/users',userRouter); //for give direction
 
 //post routes

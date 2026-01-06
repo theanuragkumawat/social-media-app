@@ -13,11 +13,34 @@ import { useSelector, useDispatch } from "react-redux";
 import { getCurrentUser } from "../utils/auth.js";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { CornerLeftUpIcon } from "lucide-react";
+import { getAllFeedStories } from "../utils/config.js";
 
 function Home() {
   const dispatch = useDispatch();
   const { isLoggedIn, userData } = useSelector((state) => state.auth);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [stories, setStories] = useState([]);
+  const [activeUserIndex, setActiveUserIndex] = useState(0);
+  const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+
+  async function fetchStories() {
+    if (!isLoggedIn) return;
+    try {
+      const response = await getAllFeedStories();
+      if (response) {
+        console.log("STORIES:", response.data.data.docs); // monggose-aggregatep-paginate-v2
+
+        setStories(response.data.data.docs);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  useEffect(() => {
+    fetchStories();
+  }, [isLoggedIn]);
+
   useEffect(() => {
     if (showStoryViewer) {
       document.body.style.overflow = "hidden";
@@ -48,7 +71,7 @@ function Home() {
 
   const [activeDialog, setActiveDialog] = useState(null);
   // console.log(activeDialog);
-console.log(showStoryViewer);
+  // console.log(showStoryViewer);
 
   const time = "2d";
   const likes = 106437;
@@ -64,56 +87,68 @@ console.log(showStoryViewer);
       {/* <Navbar/> */}
       <div className="middle-part col-span-12 lg:col-start-3 xl:col-start-4 xl:col-span-6 text-center mt-4">
         {/* stories */}
-        <div className="flex justify-center">
-          <Carousel
-            opts={{
-              align: "start",
-              slidesToScroll: 6,
-            }}
-            className="w-full max-w-xl"
-          >
-            <CarouselContent className={"py-1.5 border-none md:px-1"}>
-              {Array.from({ length: 20 }).map((_, index) => (
-                <CarouselItem
-                  key={index}
-                  className="basis-1/6 border-none outline-none py-5"
-                >
-                  <div className="outline-0 border-0 ring-0">
-                    <Card
-                      className={
-                        "rounded-full size-23 flex justify-center items-center border-none bg-transparent"
-                      }
-                    >
-                      <CardContent className="aspect-square flex flex-col items-center justify-center bg-transparent border-none">
-                        <div onClick={() => setShowStoryViewer(true)} className="cursor-pointer active:scale-97 size-19 flex items-center justify-center rounded-full ring-3 ring-red-500 ring-offset-4 ring-offset-neutral-950 bg-sky-700">
-                          {/* <span className="text-3xl font-semibold">{index+1}</span> */}
-                          <img
-                            className=" size-19 object-cover rounded-full select-none"
-                            src="https://images.unsplash.com/photo-1696834137451-f52f471a58bc?q=80&w=200&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-                            alt=""
-                          />
-                        </div>
-                        <p className="text-xs mt-2 text-neutral-50 select-none">
-                          palaksolanki
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious
-              className={
-                "hidden sm:flex ml-11 lg:ml-9 dark:bg-neutral-100 hover:dark:text-neutral-900 hover:dark:bg-neutral-300 text-neutral-950 size-7"
-              }
-            />
-            <CarouselNext
-              className={
-                "hidden sm:flex mr-11 lg:mr-9 dark:bg-neutral-100 hover:dark:text-neutral-900 hover:dark:bg-neutral-300 text-neutral-950 size-7"
-              }
-            />
-          </Carousel>
-        </div>
+        {stories && stories.length > 0 && (
+          <div className="flex justify-center">
+            <Carousel
+              opts={{
+                align: "start",
+                slidesToScroll: 6,
+              }}
+              className="w-full max-w-xl"
+            >
+              <CarouselContent className={"py-1.5 border-none md:px-1"}>
+                {stories?.map((item, index) => (
+                  <CarouselItem
+                    key={index}
+                    className="basis-1/6 border-none outline-none py-5"
+                  >
+                    <div className="outline-0 border-0 ring-0">
+                      <Card
+                        className={
+                          "rounded-full size-23 flex justify-center items-center border-none bg-transparent"
+                        }
+                      >
+                        <CardContent className="aspect-square flex flex-col items-center justify-center bg-transparent border-none ">
+                          <div
+                            onClick={() => {
+                              setActiveUserIndex(index);
+                              setActiveStoryIndex(0);
+                              setShowStoryViewer(true);
+                            }}
+                            className="cursor-pointer active:scale-97  flex items-center justify-center rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-yellow-500 p-[3px]"
+                          >
+                            {/* <span className="text-3xl font-semibold">{index+1}</span> */}
+                            <div className="size-19 bg-black p-[3px] rounded-full">
+
+                            <img
+                              className=" size-full object-cover rounded-full select-none   "
+                              src={item.user.avatar}
+                              alt=""
+                              />
+                              </div>
+                          </div>
+                          <p className="text-xs mt-2 text-neutral-50 select-none">
+                            {item.user.username}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious
+                className={
+                  "hidden sm:flex ml-11 lg:ml-9 dark:bg-neutral-100 hover:dark:text-neutral-900 hover:dark:bg-neutral-300 text-neutral-950 size-7"
+                }
+              />
+              <CarouselNext
+                className={
+                  "hidden sm:flex mr-11 lg:mr-9 dark:bg-neutral-100 hover:dark:text-neutral-900 hover:dark:bg-neutral-300 text-neutral-950 size-7"
+                }
+              />
+            </Carousel>
+          </div>
+        )}
 
         {/* posts */}
         <div className=" flex items-center justify-center flex-col mt-3">
@@ -215,8 +250,17 @@ console.log(showStoryViewer);
         </div>
       </div>
       {/* story viewer */}
-      
-      {showStoryViewer && <StoryViewer setShowStoryViewer={setShowStoryViewer} />}
+
+      {showStoryViewer && (
+        <StoryViewer
+          data={stories}
+          userIndex={activeUserIndex}
+          storyIndex={activeStoryIndex}
+          setUserIndex={setActiveUserIndex}
+          setStoryIndex={setActiveStoryIndex}
+          setShowStoryViewer={setShowStoryViewer}
+        />
+      )}
     </>
   );
 }

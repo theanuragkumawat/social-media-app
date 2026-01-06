@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { Link } from "react-router";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Link, useParams } from "react-router";
 import {
   ChevronDown,
   Clapperboard,
@@ -10,6 +10,8 @@ import {
   Heart,
   MessageCircle,
   UserPlus,
+  Link as LinkIcon,
+  Loader,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -20,20 +22,36 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
-
-import { getUserProfile } from "../utils/config";
+import {
+  getUserProfile,
+  getUserStories,
+  toggleFollowUser,
+} from "../utils/config";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { useGetAllUserPostsQuery } from "../store/api/apiSlice.js";
+import StoryViewer from "../components/StoryViewer.jsx";
+import PostOverlay from "../components/PostOverlay.jsx";
 
-function Profile() {
-  const dispatch = useDispatch();
+function UserProfile() {
+  const { username } = useParams();
+  const { isLoggedIn } = useSelector((state) => state.auth);
+  const [userData, setUserData] = useState(null);
+  const [followState, setFollowState] = useState(""); // "loading" | "following" | "not-following"
+
 
   const getUserProfileInfo = async () => {
     try {
-      const response = await getUserProfile();
+      const response = await getUserProfile(username);
       if (response) {
-        dispatch(storeLogin(response.data.data));
-        // console.log(response.data.data);
+        setFollowState(
+          !response.data.data.isFollowing && !response.data.data.isFollowedBy
+            ? "Follow"
+            : response.data.data.isFollowedBy && !response.data.data.isFollowing
+            ? "Follow back"
+            : "Following"
+        );
+        console.log(`Fetched user profile:`, response.data);
+        setUserData(response.data.data);
       }
     } catch (error) {
       console.log(error);
@@ -42,46 +60,121 @@ function Profile() {
 
   useEffect(() => {
     getUserProfileInfo();
-  }, []);
+  }, [username]);
 
-  const userData = useSelector((state) => state.auth.userData);
   return (
     <>
       <div className="col-span-12  md:col-span-10 md:col-start-3 lg:col-span-9 lg:col-start-4 xl:col-span-10 xl:col-start-3 mt-4">
         <div className="flex justify-center items-center   flex-col w-full">
-          <UserOwnProfile userData={userData} />
+          {userData && (
+            <UserOwnProfile
+              userData={userData}
+              setUserData={setUserData}
+              isLoggedIn={isLoggedIn}
+              followState={followState}
+              setFollowState={setFollowState}
+            />
+          )}
         </div>
-        {userData?._id && (
-          <UserUploads userId={userData._id} totalPosts={userData.postsCount} />
+
+        {userData && (
+          <UserUploads userId={userData._id} userData={userData} totalPosts={userData.postsCount} />
         )}
       </div>
     </>
   );
 }
 
-const UserOwnProfile = function ({ userData }) {
+const UserOwnProfile = function ({
+  userData,
+  setUserData,
+  isLoggedIn,
+  followState,
+  setFollowState,
+}) {
+  const [isFollowUpdating, setIsFollowUpdating] = useState(false);
+
+  async function toggleFollow() {
+    if (!isLoggedIn) {
+      console.log("user is not authenticated");
+      return;
+    }
+    try {
+      setIsFollowUpdating(true);
+      const response = await toggleFollowUser(userData?._id);
+      if (response) {
+        setFollowState((prev) =>
+          prev == "Follow" || prev == "Follow back"
+            ? "Following"
+            : prev == "Following" && userData.isFollowedBy
+            ? "Follow back"
+            : "Follow"
+        );
+        console.log(response.data.message);
+        
+        if(!userData.isFollowing){
+          setUserData(prev => ({...prev, isFollowing: !userData.isFollowing, followersCount: userData.followersCount + 1}))
+        } else {
+          setUserData(prev => ({...prev, isFollowing: !userData.isFollowing, followersCount: userData.followersCount -1}))
+        }
+      }
+
+
+    } catch (error) {
+      console.log(error);
+    }
+    setIsFollowUpdating(false);
+  }
+  const [stories, setStories] = useState([]);
+  const [showStoryViewer, setShowStoryViewer] = useState(false);
+  const [activeUserIndex, setActiveUserIndex] = useState(0);
+  const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+
+  console.log("Stories", stories);
+  const fetchStories = async function () {
+    try {
+      const response = await getUserStories(userData._id);
+      setStories([
+        {
+          user: userData,
+          stories: response.data.data,
+        },
+      ]);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStories();
+  }, []);
+
   return (
     <>
       <div className="flex flex-row mt-6 gap-6 sm:w-xl">
-        <div className="active:scale-97 cursor-pointer flex justify-center lg:items-center flex-shrink-0 ">
-          <div className="ring-3 ring-rose-600 ring-offset-4 ring-offset-neutral-950 rounded-full size-20 md:size-30 lg:size-40 object-cover  flex-[0_0_5rem] md:flex-[0_0_7.5rem] lg:flex-[0_0_10rem]">
+        <div
+          onClick={() => setShowStoryViewer(true)}
+          className="active:scale-97 cursor-pointer flex justify-center lg:items-center flex-shrink-0 "
+        >
+          <div className="ring-3 ring-rose-600 ring-offset-4 ring-offset-neutral-950 rounded-full size-20 md:size-30 lg:size-40 object-cover flex-[0_0_5rem] md:flex-[0_0_7.5rem] lg:flex-[0_0_10rem]">
             <img
               src={
-                userData && userData.avatar && userData.avatar != ""
+                userData.avatar
                   ? userData.avatar
-                  : "https://www.shutterstock.com/image-vector/default-avatar-profile-icon-transparent-600nw-2534623311.jpg"
+                  : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
               }
               className="w-full h-full rounded-full object-cover"
+              alt="profile"
             />
           </div>
         </div>
         <div>
           <div className="flex flex-col mb-3">
             <h2 className="text-md font-bold sm:text-2xl sm:font-extrabold mb-1 dark:text-white">
-              {userData ? userData?.username : "username"}
+              {userData.username}
             </h2>
-            <h3 className="hidden sm:block text-sm mb-2">
-              {userData ? userData?.fullname : "Full Name"}
+            <h3 className="hidden sm:block text-sm mb-2 dark:text-white">
+              {userData ? userData.fullname : "Full Name"}
             </h3>
             <div className="flex flex-row gap-4 text-sm">
               <p className="">
@@ -106,9 +199,24 @@ const UserOwnProfile = function ({ userData }) {
           </div>
           <div className="hidden lg:block">
             <p className="!whitespace-pre-line text-sm">
-              {`${userData ? userData.bio : ""}`}
+              {`${userData && userData.bio ? userData.bio : ""}`}
             </p>
-
+            {userData && userData.website && (
+              <p className="text-blue-400 leading-6 text-sm">
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex justify-start items-center gap-1"
+                  href={
+                    userData.website.startsWith("http")
+                      ? userData.website
+                      : `https://${userData.website}`
+                  }
+                >
+                  <LinkIcon size={15} /> {userData.website}
+                </a>
+              </p>
+            )}
             <p className="text-sm mt-1.5">
               Followed by{" "}
               <span className="font-bold">rjabhinavv, jitendrak1</span> + 2 more
@@ -119,10 +227,10 @@ const UserOwnProfile = function ({ userData }) {
 
       <div className=" flex lg:hidden  flex-col sm:w-xl mt-6">
         <h3 className="sm:hidden text-sm mb-1 font-bold w-fit">
-          {userData ? userData?.fullname : "Full name"}
+          {userData ? userData.fullname : "Full Name"}
         </h3>
         <p className="!whitespace-pre-line text-sm">
-          {`${userData ? userData.bio : ""}`}
+          {`${userData && userData.bio ? userData.bio : ""}`}
         </p>
 
         <p className="text-sm mt-1.5">
@@ -132,17 +240,27 @@ const UserOwnProfile = function ({ userData }) {
       </div>
 
       <div className="flex flex-row w-full gap-1.5 mt-6 max-w-xl">
-        <Link
-          to="/accounts/edit"
-          className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full flex justify-center items-center"
+        <button
+          disabled={isFollowUpdating}
+          onClick={toggleFollow}
+          className={`${
+            followState == "Follow" || followState == "Follow back"
+              ? " dark:bg-sky-600 hover:dark:bg-sky-700"
+              : "dark:bg-gray-700 hover:dark:bg-gray-600"
+          } cursor-pointer font-bold py-3 active:scale-98 text-sm rounded-lg w-full flex justify-center items-center`}
         >
-          Edit Profile
-        </Link>
-        <button className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">
-          View Archive
+          {isFollowUpdating ? (
+            <Loader size={19} className={"motion-safe:animate-spin"} />
+          ) : (
+            followState
+          )}
+        </button>
+        <button className="cursor-pointer font-bold py-3 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">
+          Message
         </button>
       </div>
       {/* Highlites */}
+
       <div className="mt-10 md:gap-1  max-w-full">
         <Carousel
           className=" max-w-xl "
@@ -152,7 +270,7 @@ const UserOwnProfile = function ({ userData }) {
           }}
         >
           <CarouselContent className="-ml-1 w-full">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 4, 5, 6, 7].map((item, index) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((item, index) => (
               <CarouselItem
                 key={index}
                 className={"pl-1 sm:basis-1/6 basis-1/5"}
@@ -164,12 +282,13 @@ const UserOwnProfile = function ({ userData }) {
                         <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
                           <img
                             className="w-full h-full object-cover rounded-full select-none"
-                            src="https://images.unsplash.com/photo-1696834137457-8872b6c525f4?..."
+                            src="https://images.unsplash.com/photo-1696834137457-8872b6c525f4?q=80&w=200"
+                            alt="highlight"
                           />
                         </div>
 
                         <p className="text-center text-xs font-semibold text-neutral-50 mt-3">
-                          Meetup
+                          Trip '24
                         </p>
                       </div>
                     </CardContent>
@@ -184,26 +303,59 @@ const UserOwnProfile = function ({ userData }) {
         </Carousel>
       </div>
 
-      {/* posts */}
+      {showStoryViewer && (
+        <StoryViewer
+          data={stories}
+          userIndex={activeUserIndex}
+          storyIndex={activeStoryIndex}
+          setUserIndex={setActiveUserIndex}
+          setStoryIndex={setActiveStoryIndex}
+          setShowStoryViewer={setShowStoryViewer}
+        />
+      )}
     </>
   );
 };
 
-function UserUploads({ userId, totalPosts }) {
+{
+  /* posts */
+}
+function UserUploads({ userId, totalPosts, userData }) {
+    const [openPostOverlay, setOpenPostOverlay] = useState(false);
+    const [currentOverlayPost,setCurrentOverlayPost] = useState(null)
   const [activeTab, setActiveTab] = useState("post");
   const [page, setPage] = useState(1);
+
+  const loadMoreRef = useRef(null);
+
+  // Hook logic preserved but result ignored
   const { data, isLoading, isFetching } = useGetAllUserPostsQuery({
     userId,
     type: activeTab,
     page,
   });
 
-  const posts = data?.data || []; 
-  // const hasMore = data?.hasMore;
+  const posts = data?.data || [];
   const hasMore = page * 5 < totalPosts;
-  // console.log(data);
+
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !isFetching) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { threshold: 1 }
+    );
+
+    observer.observe(loadMoreRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, isFetching]);
 
   return (
+    <>
     <div className="mt-8 w-full lg:px-10 xl:px-30 2xl:px-50">
       <Tabs
         value={activeTab}
@@ -256,24 +408,27 @@ function UserUploads({ userId, totalPosts }) {
           <>
             <h2 className="text-center font-bold">Posts</h2>
             <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5 rounded-md overflow-hidden">
-              {posts?.map((item) => (
+              {posts.map((item) => (
                 <PostCard
-                  totalComments={item.totalComments}
-                  totalLikes={item.totalLikes}
+                userData={userData}
+                post={item}
+                  setOpenPostOverlay={setOpenPostOverlay}
+                  setCurrentOverlayPost={setCurrentOverlayPost}
                   key={item._id}
-                  url={item.media[0]}
                 />
               ))}
             </div>
-            {hasMore && (
+            { (isLoading || isFetching) && <div className="w-full flex justify-center items-center py-7"> <Loader className="animate-spin text-neutral-100" /></div> }
+            {/* {hasMore && (
               <button
                 onClick={() => setPage((prev) => prev + 1)}
                 disabled={isFetching}
                 className="mt-4 px-4 py-2 text-black bg-gray-100 rounded hover:bg-gray-200 w-full"
               >
-                {isFetching || isLoading? "Loading more..." : "Load More"}
+                Load More
               </button>
-            )}
+            )} */}
+            <div ref={loadMoreRef} className="h-10" />
           </>
         </TabsContent>
         <TabsContent value="reel" className={"border-1 border-amber-600"}>
@@ -330,23 +485,37 @@ function UserUploads({ userId, totalPosts }) {
         </TabsContent>
       </Tabs>
     </div>
+    
+      <PostOverlay postData={currentOverlayPost} userData={userData} openPostOverlay={openPostOverlay} setOpenPostOverlay={setOpenPostOverlay} />
+    </>
   );
 }
 
-function PostCard({ url, totalLikes, totalComments }) {
+function PostCard({ post,userData, setCurrentOverlayPost, setOpenPostOverlay }) {
   return (
     <>
       <div className="relative overflow-hidden group cursor-pointer">
-        <img className="object-cover aspect-9/11 size-full" src={url} />
+        <img
+          className="object-cover aspect-9/11 size-full"
+          src={post.media[0]}
+          alt="post"
+        />
 
         <p></p>
-        <div className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/70 active:bg-black/80">
+        <div
+          onClick={() => {
+            setCurrentOverlayPost(post)
+            setOpenPostOverlay(true)
+
+          }}
+         className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/70 active:bg-black/80"
+         >
           <div className="flex justify-center items-center gap-4.5 h-full">
             <div className="flex flex-row gap-1">
-              <Heart fill="currentColor" /> <span>{totalLikes}</span>
+              <Heart fill="currentColor" /> <span>{post.totalLikes}</span>
             </div>
             <div className="flex flex-row gap-1">
-              <MessageCircle fill="currentColor" /> <span>{totalComments}</span>
+              <MessageCircle fill="currentColor" /> <span>{post.totalComments}</span>
             </div>
           </div>
         </div>
@@ -380,22 +549,4 @@ function ReelCard({ url }) {
   );
 }
 
-export default Profile;
-
-// FOllowing Message elements
-{
-  /* <div className="flex flex-row w-xl gap-1.5 mt-6">
-        <button className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full flex justify-center items-center">
-          Following{" "}
-          <span>
-            <ChevronDown size={19} strokeWidth={1.5} />
-          </span>
-        </button>
-        <button className="cursor-pointer font-bold py-2.5 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">
-          Message
-        </button>
-        <button className="cursor-pointer font-bold p-3 flex justify-center items-center dark:bg-gray-700 active:scale-98 hover:dark:bg-gray-600 text-sm rounded-lg hover:scale-105">
-          <UserPlus size={16} />
-        </button>
-      </div> */
-}
+export default UserProfile;

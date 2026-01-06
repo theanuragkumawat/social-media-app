@@ -26,10 +26,12 @@ const postSchema = new mongoose.Schema(
     totalLikes: {
       type: Number,
       default: 0,
+      min: 0
     },
     totalComments: {
       type: Number,
       default: 0,
+      min:0
     },
     status: {
       type: String,

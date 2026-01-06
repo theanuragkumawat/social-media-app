@@ -14,6 +14,7 @@ import {
   XIcon,
   Images,
   Loader,
+  CircleX,
 } from "lucide-react";
 import {
   Sheet,
@@ -57,6 +58,7 @@ import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router";
 import { useSelector, useDispatch } from "react-redux";
 import { createPost, createStory } from "../utils/config";
+import SearchSheet from "./SearchSheet";
 
 function Navbar() {
   const navItems = [
@@ -121,7 +123,7 @@ function Navbar() {
     },
   ];
 
-  const [isSearchSheetOpen,setIsSearchSheetOpen] = useState(false)
+  const [isSearchSheetOpen, setIsSearchSheetOpen] = useState(false);
   const { isLoggedIn, userData } = useSelector((state) => state.auth);
 
   const [activeDialog, setActiveDialog] = useState(null);
@@ -148,127 +150,124 @@ function Navbar() {
             {navItems.map((item) => {
               if (item.to == "/create") {
                 return (
-                      <div key={item.name} className="active:scale-96 rounded-xl px-2 cursor-pointer">
-                        <DropdownMenu >
-                          <DropdownMenuTrigger
-                            asChild
-                            className={"active:scale-96 rounded-xl px-2"}
-                          >
-                            <div
-                              key={item.name}
-                              className={
-                                "flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2"
-                              }
-                            >
-                              <>
-                                <div className="">
-                                  {true ? (
-                                    <item.fillIcon className="size-6.5 box-border" />
-                                  ) : (
-                                    <item.icon className="size-6.5 box-border" />
-                                  )}
-                                </div>
-                                <h3
-                                  className={`${
-                                    true ? "font-bold" : ""
-                                  } text-md hidden lg:block`}
-                                >
-                                  {item.name}
-                                </h3>
-                              </>
+                  <div
+                    key={item.name}
+                    className="active:scale-96 rounded-xl px-2 cursor-pointer"
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        asChild
+                        className={"active:scale-96 rounded-xl px-2"}
+                      >
+                        <div
+                          key={item.name}
+                          className={
+                            "flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2"
+                          }
+                        >
+                          <>
+                            <div className="">
+                              {true ? (
+                                <item.fillIcon className="size-6.5 box-border" />
+                              ) : (
+                                <item.icon className="size-6.5 box-border" />
+                              )}
                             </div>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            className={"w-45 p-1.5 rounded-sm "}
-                          >
-                            <DropdownMenuItem
-                              className={"h-10 "}
-                              onSelect={() =>
-                                activeDialog == null && setActiveDialog("post")
-                              }
+                            <h3
+                              className={`${
+                                true ? "font-bold" : ""
+                              } text-md hidden lg:block`}
                             >
-                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                                <span>Post</span>
-                                <span className="flex justify-center items-center">
-                                  <ImagePlay
-                                    className="dark:text-neutral-50 size-5"
-                                    strokeWidth={2}
-                                  />
-                                </span>
-                              </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className={"h-10"}
-                              onSelect={() => setActiveDialog("story")}
-                            >
-                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                                <span>Story</span>
-                                <span className="flex justify-center items-center">
-                                  <Aperture
-                                    className="dark:text-neutral-50 size-5"
-                                    strokeWidth={2}
-                                  />
-                                </span>
-                              </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className={"h-10"}
-                              onSelect={() => setActiveDialog("reel")}
-                            >
-                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                                <span>Reel</span>
-                                <span className="flex justify-center items-center">
-                                  <Clapperboard
-                                    className="dark:text-neutral-50 size-5"
-                                    strokeWidth={2}
-                                  />
-                                </span>
-                              </div>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className={"h-10"}
-                              onSelect={() => setActiveDialog("live")}
-                            >
-                              <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                                <span>Live Video</span>
-                                <span className="flex justify-center items-center">
-                                  <Radio
-                                    className="dark:text-neutral-50 size-5"
-                                    strokeWidth={2}
-                                  />
-                                </span>
-                              </div>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                              {item.name}
+                            </h3>
+                          </>
+                        </div>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className={"w-45 p-1.5 rounded-sm "}>
+                        <DropdownMenuItem
+                          className={"h-10 "}
+                          onSelect={() =>
+                            activeDialog == null && setActiveDialog("post")
+                          }
+                        >
+                          <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                            <span>Post</span>
+                            <span className="flex justify-center items-center">
+                              <ImagePlay
+                                className="dark:text-neutral-50 size-5"
+                                strokeWidth={2}
+                              />
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={"h-10"}
+                          onSelect={() => setActiveDialog("story")}
+                        >
+                          <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                            <span>Story</span>
+                            <span className="flex justify-center items-center">
+                              <Aperture
+                                className="dark:text-neutral-50 size-5"
+                                strokeWidth={2}
+                              />
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={"h-10"}
+                          onSelect={() => setActiveDialog("reel")}
+                        >
+                          <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                            <span>Reel</span>
+                            <span className="flex justify-center items-center">
+                              <Clapperboard
+                                className="dark:text-neutral-50 size-5"
+                                strokeWidth={2}
+                              />
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className={"h-10"}
+                          onSelect={() => setActiveDialog("live")}
+                        >
+                          <div className="flex flex-row justify-between w-full dark:text-neutral-50">
+                            <span>Live Video</span>
+                            <span className="flex justify-center items-center">
+                              <Radio
+                                className="dark:text-neutral-50 size-5"
+                                strokeWidth={2}
+                              />
+                            </span>
+                          </div>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 );
               }
 
               if (item.to == "/search") {
                 return (
-                    <div
+                  <div
                     onClick={() => setIsSearchSheetOpen(!isSearchSheetOpen)}
-                      key={item.name}
-                      className={
-                        "active:scale-96 rounded-xl px-2 cursor-pointer"
-                      }
+                    key={item.name}
+                    className={"active:scale-96 rounded-xl px-2 cursor-pointer"}
+                  >
+                    <div
+                      className={`flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2 rounded-xl`}
                     >
-                      <div
-                        className={`flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2 rounded-xl`}
-                      >
-                        <div className="">
-                          {true ? (
-                            <item.fillIcon className="size-6.5 box-border" />
-                          ) : (
-                            <item.icon className="size-6.5 box-border" />
-                          )}
-                        </div>
-                        <h3 className={`text-md hidden lg:block`}>
-                          {item.name}
-                        </h3>
+                      <div className="">
+                        {true ? (
+                          <item.fillIcon className="size-6.5 box-border" />
+                        ) : (
+                          <item.icon className="size-6.5 box-border" />
+                        )}
                       </div>
+                      <h3 className={`text-md hidden lg:block`}>{item.name}</h3>
                     </div>
+                  </div>
                 );
               }
 
@@ -316,9 +315,8 @@ function Navbar() {
               className={"p-0"}
               // onOpenChange={(isOpen) => !isOpen && setActiveDialog(null)}
             >
-              <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0">
+              <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0 [&>button]:hidden">
                 <PostWizard setActiveDialog={setActiveDialog} />
-                <DialogClose></DialogClose>
               </DialogContent>
             </Dialog>
 
@@ -429,23 +427,10 @@ function Navbar() {
       </div>
 
       {/* SEARCH SHEET */}
-      <Sheet
-      className={""}
-        open={isSearchSheetOpen}
-        onOpenChange={ () => setIsSearchSheetOpen(!isSearchSheetOpen)}
-        modal={false}
-      >
-        <SheetContent
-         side="left"
-         className={"[&>button:first-of-type]:hidden sm:min-w-[450px] bg-background shadow-none rounded-2xl"}
-        >
-          <SheetHeader>
-            <SheetTitle></SheetTitle>
-            <SheetDescription>
-            </SheetDescription>
-          </SheetHeader>
-        </SheetContent>
-      </Sheet>
+      {  
+        
+      <SearchSheet isSearchSheetOpen={isSearchSheetOpen} setIsSearchSheetOpen={setIsSearchSheetOpen} />
+      }
     </>
   );
 }
@@ -721,7 +706,7 @@ function StoryUploadModal({ setActiveDialog }) {
 
   return (
     <>
-      <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0">
+      <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl p-0 [&>button]:hidden">
         <XIcon
           className="right-0 top-0 absolute mr-2 mt-2 size-6 cursor-pointer"
           onClick={() => {

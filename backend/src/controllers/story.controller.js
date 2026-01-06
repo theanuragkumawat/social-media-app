@@ -40,8 +40,12 @@ const createStory = asyncHandler(async (req, res) => {
 
 const getAllFeedStories = asyncHandler(async (req, res) => {
    const userId = req.user?._id;
+   const { page } = req.query
 
-   const stories = await Follow.aggregate([
+   const pageNo = parseInt(page) > 0 ? parseInt(page) : 1;
+   const limit = 10
+
+   const storiesAggregate = Follow.aggregate([
       {
          $match: {
             follower: new mongoose.Types.ObjectId(userId),
@@ -60,7 +64,7 @@ const getAllFeedStories = asyncHandler(async (req, res) => {
                   },
                },
                {
-                  $sort: { createdAt: -1 },
+                  $sort: { createdAt: 1 },
                },
             ],
          },
@@ -96,6 +100,8 @@ const getAllFeedStories = asyncHandler(async (req, res) => {
       },
    ]);
 
+   const stories = await Follow.aggregatePaginate(storiesAggregate,{ page:pageNo,limit:limit })
+
    if (!stories) {
       throw new ApiError(
          500,
@@ -122,24 +128,8 @@ const getUserStories = asyncHandler(async (req, res) => {
             status: "public",
          },
       },
-      { $sort: { createdAt: -1 } },
-      {
-         $lookup: {
-            from: "users",
-            foreignField: "_id",
-            localField: "owner",
-            as: "owner",
-            pipeline: [
-               {
-                  $project: {
-                     username: 1,
-                     avatar: 1,
-                     fullname: 1,
-                  },
-               },
-            ],
-         },
-      },
+      { $sort: { createdAt: 1 } },
+      
       {
          $lookup: {
             from: "users",
@@ -173,9 +163,6 @@ const getUserStories = asyncHandler(async (req, res) => {
                },
             ],
          },
-      },
-      {
-         $unwind: "$owner",
       },
    ]);
 

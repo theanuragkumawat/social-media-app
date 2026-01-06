@@ -1,6 +1,6 @@
 import {Router} from "express"
 import { deletePost, getAllUserPosts, getPostById, togglePostStatus, updatePost, uploadPost } from "../controllers/post.controller.js"
-import { verifyJWT } from "../middlewares/auth.middleware.js"
+import { verifyJWT, verifyJWTOptional } from "../middlewares/auth.middleware.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { uploadPostValidator } from "../validators/index.js"
 import { validate } from "../middlewares/validator.middleware.js"
@@ -18,5 +18,5 @@ router.route('/:postId')
 .delete(deletePost)
 
 router.route('/:postId/status').patch(togglePostStatus)
-router.route('/:userId/posts').get(getAllUserPosts)
+router.route('/:userId/posts').get(verifyJWTOptional,getAllUserPosts)
 export default router

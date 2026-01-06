@@ -4,6 +4,8 @@ import ForgotPassword from "./Auth/ForgotPassword";
 import Post from "./Post";
 import AccountNavbar from "./AccountNavbar";
 import StoryViewer from "./StoryViewer";
+import SearchSheet from "./SearchSheet";
+import PostOverlay from "./PostOverlay";
 
 export {
     Login,
@@ -11,5 +13,7 @@ export {
     ForgotPassword,
     Post,
     AccountNavbar,
-    StoryViewer
+    StoryViewer,
+    SearchSheet,
+    PostOverlay
 }

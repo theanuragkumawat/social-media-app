@@ -25,16 +25,12 @@ const toggleFollow = asyncHandler(async (req, res) => {
          followee: userId,
       });
 
-      await User.findByIdAndUpdate(userId,
-        {
-            $inc: { followersCount: -1 }
-        }
-      )
-      await User.findByIdAndUpdate(req.user?._id,
-        {
-            $inc: { followingCount: -1 }
-        }
-      )
+      await User.findByIdAndUpdate(userId, {
+         $inc: { followersCount: -1 },
+      });
+      await User.findByIdAndUpdate(req.user?._id, {
+         $inc: { followingCount: -1 },
+      });
 
       if (!follow) {
          throw new ApiError(500, "Something went wrong while unfollowing user");
@@ -49,16 +45,12 @@ const toggleFollow = asyncHandler(async (req, res) => {
          followee: userId,
       });
 
-      await User.findByIdAndUpdate(userId,
-        {
-            $inc: { followersCount: 1 }
-        }
-      )
-      await User.findByIdAndUpdate(req.user?._id,
-        {
-            $inc: { followingCount: 1 }
-        }
-      )
+      await User.findByIdAndUpdate(userId, {
+         $inc: { followersCount: 1 },
+      });
+      await User.findByIdAndUpdate(req.user?._id, {
+         $inc: { followingCount: 1 },
+      });
 
       if (!follow) {
          throw new ApiError(500, "Something went wrong while following user");
@@ -177,39 +169,39 @@ const getFollowing = asyncHandler(async (req, res) => {
       },
    ]);
 
-   return res.status(200).json(new ApiResponse(200,following,"Following fetched successfully"))
+   return res
+      .status(200)
+      .json(new ApiResponse(200, following, "Following fetched successfully"));
 });
 
-const removeFollower = asyncHandler(async (req,res) => {
-       const { userId } = req.params;
+const removeFollower = asyncHandler(async (req, res) => {
+   const { userId } = req.params;
 
-       const removeFollow = await Follow.findOneAndDelete(
-        {
-            followee: req.user?._id,
-            follower: userId
-        }
-       ) 
+   const removeFollow = await Follow.findOneAndDelete({
+      followee: req.user?._id,
+      follower: userId,
+   });
 
-       await User.findByIdAndUpdate(userId,
-        {
-            $inc: { followingCount: -1 }
-        }
-      )
-      await User.findByIdAndUpdate(req.user?._id,
-        {
-            $inc: { followersCount: -1 }
-        }
-      )
+   await User.findByIdAndUpdate(userId, {
+      $inc: { followingCount: -1 },
+   });
+   await User.findByIdAndUpdate(req.user?._id, {
+      $inc: { followersCount: -1 },
+   });
 
-       if(!removeFollow){
-            throw new ApiError(500,"something went wrong while removing follower")
-       }
+   if (!removeFollow) {
+      throw new ApiError(500, "something went wrong while removing follower");
+   }
 
-       return res.status(200).json(new ApiResponse(200,removeFollow,"Follower removed successfully"))
-})
+   return res
+      .status(200)
+      .json(
+         new ApiResponse(200, removeFollow, "Follower removed successfully")
+      );
+});
 
 // const toggleFollow = asyncHandler(async (req,res) => {
 
 // })
 
-export { toggleFollow, getFollowers, getFollowing,removeFollower };
+export { toggleFollow, getFollowers, getFollowing, removeFollower };

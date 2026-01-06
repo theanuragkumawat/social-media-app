@@ -11,6 +11,7 @@ import {
    forgotPasswordMailgenContent,
    emailOtpVerificationMailgenContent,
 } from "../utils/mail.js";
+import { Follow } from "../models/follow.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
    try {
@@ -474,21 +475,35 @@ const removeAvatar = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, user, "avatar image removed successfully"));
 });
 
-const getUserProfile = asyncHandler(async (req,res) => {
-   const userId = req.user?._id
-   
-   const user = await User.findById(userId)
+const getUserProfile = asyncHandler(async (req, res) => {
+   // const userId = req.user?._id;
+   const { username } = req.params;
+   console.log(req.params);
 
-   if(!user){
+   const user = await User.findOne({ username: username });
+
+   if (!user) {
       throw new ApiError(404, "User not found");
    }
 
-   return res.status(200).json(new ApiResponse(200, user, "User profile fetched successfully"));
+   const isFollowing = await Follow.exists({
+      follower: req.user?._id,
+      followee: user._id,
+   });
 
-})
+   const isFollowedBy = await Follow.exists({
+      follower: user._id,
+      followee: req.user?._id
+   })
+
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, {...user.toObject(), isFollowing: !!isFollowing, isFollowedBy: !!isFollowedBy }, "User profile fetched successfully"));
+});
 
 const changeProfileDetails = asyncHandler(async (req, res) => {
-   const {bio, website,  gender } = req.body;
+   const { bio, website, gender } = req.body;
 
    const userId = req.user?._id;
 
@@ -515,6 +530,61 @@ const changeProfileDetails = asyncHandler(async (req, res) => {
       .json(new ApiResponse(200, user, "Profile updated successfully"));
 });
 
+const searchUsers = asyncHandler(async (req, res) => {
+   console.log(req.query);
+
+   const { search, page = 1, limit = 10 } = req.query;
+   const pageNumber = parseInt(page);
+   const limitNumber = parseInt(limit);
+
+   if (!search || String(search).trim() == "") {
+      return res
+         .status(200)
+         .json(new ApiResponse(400, [], "Search query is required"));
+   }
+
+   const safeSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+   const usersAggregate = User.aggregate([
+      {
+         $match: {
+            $or: [
+               { username: { $regex: safeSearch, $options: "i" } },
+               { fullname: { $regex: safeSearch, $options: "i" } },
+            ],
+         },
+      },
+      {
+         $project: {
+            username: 1,
+            fullname: 1,
+            avatar: 1,
+         },
+      },
+   ]);
+
+   const users = await User.aggregatePaginate(usersAggregate, {
+      page: pageNumber,
+      limit: limitNumber,
+   });
+
+   if (!users) {
+      throw new ApiError(500, "Something went wrong while searching users");
+   }
+
+   return res
+      .status(200)
+      .json(new ApiResponse(200, users, "Users fetched successfully"));
+});
+
+const getUserProfileById = asyncHandler(async (req, res) => {
+   const { userId } = req.params;
+
+   if (!mongoose.Types.ObjectId.isValid(userId)) {
+      throw new ApiError(400, "Invalid user id");
+   }
+});
+
 // const getCurrentUser = asyncHandler(async (req,res) => {
 
 // })
@@ -536,4 +606,5 @@ export {
    removeAvatar,
    getUserProfile,
    changeProfileDetails,
+   searchUsers,
 };

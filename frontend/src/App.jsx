@@ -24,7 +24,7 @@ function App() {
       try {
         const response = await getCurrentUser();
         if (response) {
-          console.log(response);
+          console.log("Logged in data:",response);
           dispatch(storeLogin(response.data.data));
         }
       } catch (error) {
