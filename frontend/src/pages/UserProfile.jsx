@@ -31,13 +31,13 @@ import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { useGetAllUserPostsQuery } from "../store/api/apiSlice.js";
 import StoryViewer from "../components/StoryViewer.jsx";
 import PostOverlay from "../components/PostOverlay.jsx";
+import UserListOverlay from "../components/UserListOverlay.jsx";
 
 function UserProfile() {
   const { username } = useParams();
   const { isLoggedIn } = useSelector((state) => state.auth);
   const [userData, setUserData] = useState(null);
   const [followState, setFollowState] = useState(""); // "loading" | "following" | "not-following"
-
 
   const getUserProfileInfo = async () => {
     try {
@@ -47,10 +47,10 @@ function UserProfile() {
           !response.data.data.isFollowing && !response.data.data.isFollowedBy
             ? "Follow"
             : response.data.data.isFollowedBy && !response.data.data.isFollowing
-            ? "Follow back"
-            : "Following"
+              ? "Follow back"
+              : "Following",
         );
-        console.log(`Fetched user profile:`, response.data);
+        // console.log(`Fetched user profile:`, response.data);
         setUserData(response.data.data);
       }
     } catch (error) {
@@ -78,7 +78,11 @@ function UserProfile() {
         </div>
 
         {userData && (
-          <UserUploads userId={userData._id} userData={userData} totalPosts={userData.postsCount} />
+          <UserUploads
+            userId={userData._id}
+            userData={userData}
+            totalPosts={userData.postsCount}
+          />
         )}
       </div>
     </>
@@ -94,6 +98,9 @@ const UserOwnProfile = function ({
 }) {
   const [isFollowUpdating, setIsFollowUpdating] = useState(false);
 
+  const [openUserListOverlay,setOpenUserListOverlay] = useState(false)
+  const [userListType,setUserListType] = useState(null)
+
   async function toggleFollow() {
     if (!isLoggedIn) {
       console.log("user is not authenticated");
@@ -107,19 +114,25 @@ const UserOwnProfile = function ({
           prev == "Follow" || prev == "Follow back"
             ? "Following"
             : prev == "Following" && userData.isFollowedBy
-            ? "Follow back"
-            : "Follow"
+              ? "Follow back"
+              : "Follow",
         );
         console.log(response.data.message);
-        
-        if(!userData.isFollowing){
-          setUserData(prev => ({...prev, isFollowing: !userData.isFollowing, followersCount: userData.followersCount + 1}))
+
+        if (!userData.isFollowing) {
+          setUserData((prev) => ({
+            ...prev,
+            isFollowing: !userData.isFollowing,
+            followersCount: userData.followersCount + 1,
+          }));
         } else {
-          setUserData(prev => ({...prev, isFollowing: !userData.isFollowing, followersCount: userData.followersCount -1}))
+          setUserData((prev) => ({
+            ...prev,
+            isFollowing: !userData.isFollowing,
+            followersCount: userData.followersCount - 1,
+          }));
         }
       }
-
-
     } catch (error) {
       console.log(error);
     }
@@ -130,7 +143,7 @@ const UserOwnProfile = function ({
   const [activeUserIndex, setActiveUserIndex] = useState(0);
   const [activeStoryIndex, setActiveStoryIndex] = useState(0);
 
-  console.log("Stories", stories);
+  // console.log("Stories", stories);
   const fetchStories = async function () {
     try {
       const response = await getUserStories(userData._id);
@@ -147,25 +160,33 @@ const UserOwnProfile = function ({
 
   useEffect(() => {
     fetchStories();
-  }, []);
+  }, [userData]);
 
   return (
     <>
       <div className="flex flex-row mt-6 gap-6 sm:w-xl">
         <div
-          onClick={() => setShowStoryViewer(true)}
+          onClick={() =>
+            stories && stories[0]?.stories?.length > 0
+              ? setShowStoryViewer(true)
+              : null
+          }
           className="active:scale-97 cursor-pointer flex justify-center lg:items-center flex-shrink-0 "
         >
-          <div className="ring-3 ring-rose-600 ring-offset-4 ring-offset-neutral-950 rounded-full size-20 md:size-30 lg:size-40 object-cover flex-[0_0_5rem] md:flex-[0_0_7.5rem] lg:flex-[0_0_10rem]">
-            <img
-              src={
-                userData.avatar
-                  ? userData.avatar
-                  : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
-              }
-              className="w-full h-full rounded-full object-cover"
-              alt="profile"
-            />
+          <div
+            className={`${stories && stories[0]?.stories?.length > 0 ? "bg-gradient-to-br from-red-500 via-pink-600 to-amber-500 p-1" : ""} rounded-full`}
+          >
+            <div className=" border-[5px] border-neutral-900 rounded-full size-20 md:size-30 lg:size-40 object-cover flex-[0_0_5rem] md:flex-[0_0_7.5rem] lg:flex-[0_0_10rem]">
+              <img
+                src={
+                  userData.avatar
+                    ? userData.avatar
+                    : "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200&auto=format&fit=crop"
+                }
+                className="w-full h-full rounded-full object-cover"
+                alt="profile"
+              />
+            </div>
           </div>
         </div>
         <div>
@@ -183,13 +204,25 @@ const UserOwnProfile = function ({
                 </span>{" "}
                 posts
               </p>
-              <p className="cursor-pointer active:dark:text-neutral-400">
+              <p
+              onClick={() => {
+                setUserListType("followers")
+                setOpenUserListOverlay(true)
+              }}
+              className="cursor-pointer active:dark:text-neutral-400"
+              >
                 <span className="font-semibold text-sm ">
                   {userData ? userData.followersCount : "0"}
                 </span>{" "}
                 followers
               </p>
-              <p className="cursor-pointer active:dark:text-neutral-400">
+              <p
+              onClick={() => {
+                setUserListType("following")
+                setOpenUserListOverlay(true)
+              }}
+              className="cursor-pointer active:dark:text-neutral-400"
+              >
                 <span className="font-semibold text-sm ">
                   {userData ? userData.followingCount : "0"}
                 </span>{" "}
@@ -259,8 +292,8 @@ const UserOwnProfile = function ({
           Message
         </button>
       </div>
-      {/* Highlites */}
 
+      {/* Highlites */}
       <div className="mt-10 md:gap-1  max-w-full">
         <Carousel
           className=" max-w-xl "
@@ -313,6 +346,14 @@ const UserOwnProfile = function ({
           setShowStoryViewer={setShowStoryViewer}
         />
       )}
+
+      <UserListOverlay
+      userId={userData._id}
+      type={userListType}
+      setUserListType={setUserListType}
+      openUserListOverlay={openUserListOverlay}
+      setOpenUserListOverlay={setOpenUserListOverlay}
+      />
     </>
   );
 };
@@ -321,8 +362,9 @@ const UserOwnProfile = function ({
   /* posts */
 }
 function UserUploads({ userId, totalPosts, userData }) {
-    const [openPostOverlay, setOpenPostOverlay] = useState(false);
-    const [currentOverlayPost,setCurrentOverlayPost] = useState(null)
+  const [openPostOverlay, setOpenPostOverlay] = useState(false);
+  const [currentOverlayPost, setCurrentOverlayPost] = useState(null);
+  
   const [activeTab, setActiveTab] = useState("post");
   const [page, setPage] = useState(1);
 
@@ -347,7 +389,7 @@ function UserUploads({ userId, totalPosts, userData }) {
           setPage((prev) => prev + 1);
         }
       },
-      { threshold: 1 }
+      { threshold: 1 },
     );
 
     observer.observe(loadMoreRef.current);
@@ -356,70 +398,75 @@ function UserUploads({ userId, totalPosts, userData }) {
 
   return (
     <>
-    <div className="mt-8 w-full lg:px-10 xl:px-30 2xl:px-50">
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value)}
-        defaultValue="post"
-        className={"w-full bg-transparent"}
-      >
-        <TabsList className={"w-xs sm:w-sm md:w-md mx-auto bg-transparent"}>
-          <TabsTrigger
-            className={
-              "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
-            }
-            value="post"
-          >
-            <div className="flex flex-col justify-center">
-              <p>
-                <Grid3x3 className="inline-block mb-2" />
-              </p>
-              <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
-            </div>
-          </TabsTrigger>
-          <TabsTrigger
-            className={
-              "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
-            }
-            value="reel"
-          >
-            <div className="flex flex-col justify-center">
-              <p>
-                <Clapperboard className="inline-block mb-2" />
-              </p>
-              <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
-            </div>
-          </TabsTrigger>
-          <TabsTrigger
-            className={
-              "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
-            }
-            value="mentioned"
-          >
-            <div className="flex flex-col justify-center">
-              <p>
-                <Contact className="inline-block mb-2" />
-              </p>
-              <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
-            </div>
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="post" className={" w-full"}>
-          <>
-            <h2 className="text-center font-bold">Posts</h2>
-            <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5 rounded-md overflow-hidden">
-              {posts.map((item) => (
-                <PostCard
-                userData={userData}
-                post={item}
-                  setOpenPostOverlay={setOpenPostOverlay}
-                  setCurrentOverlayPost={setCurrentOverlayPost}
-                  key={item._id}
-                />
-              ))}
-            </div>
-            { (isLoading || isFetching) && <div className="w-full flex justify-center items-center py-7"> <Loader className="animate-spin text-neutral-100" /></div> }
-            {/* {hasMore && (
+      <div className="mt-8 w-full lg:px-10 xl:px-30 2xl:px-50">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value)}
+          defaultValue="post"
+          className={"w-full bg-transparent"}
+        >
+          <TabsList className={"w-xs sm:w-sm md:w-md mx-auto bg-transparent"}>
+            <TabsTrigger
+              className={
+                "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
+              }
+              value="post"
+            >
+              <div className="flex flex-col justify-center">
+                <p>
+                  <Grid3x3 className="inline-block mb-2" />
+                </p>
+                <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger
+              className={
+                "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
+              }
+              value="reel"
+            >
+              <div className="flex flex-col justify-center">
+                <p>
+                  <Clapperboard className="inline-block mb-2" />
+                </p>
+                <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger
+              className={
+                "border-none !bg-transparent group cursor-pointer active:!text-neutral-500"
+              }
+              value="mentioned"
+            >
+              <div className="flex flex-col justify-center">
+                <p>
+                  <Contact className="inline-block mb-2" />
+                </p>
+                <p className="w-16 h-0.5 bg-neutral-50 hidden group-data-[state=active]:block"></p>
+              </div>
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="post" className={" w-full"}>
+            <>
+              <h2 className="text-center font-bold">Posts</h2>
+              <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5 rounded-md overflow-hidden">
+                {posts.map((item) => (
+                  <PostCard
+                    userData={userData}
+                    post={item}
+                    setOpenPostOverlay={setOpenPostOverlay}
+                    setCurrentOverlayPost={setCurrentOverlayPost}
+                    key={item._id}
+                  />
+                ))}
+              </div>
+              {(isLoading || isFetching) && (
+                <div className="w-full flex justify-center items-center py-7">
+                  {" "}
+                  <Loader className="animate-spin text-neutral-100" />
+                </div>
+              )}
+              {/* {hasMore && (
               <button
                 onClick={() => setPage((prev) => prev + 1)}
                 disabled={isFetching}
@@ -428,70 +475,81 @@ function UserUploads({ userId, totalPosts, userData }) {
                 Load More
               </button>
             )} */}
-            <div ref={loadMoreRef} className="h-10" />
-          </>
-        </TabsContent>
-        <TabsContent value="reel" className={"border-1 border-amber-600"}>
-          <>
-            <h2 className="text-center font-bold">Reels</h2>
-            <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-5 gap-0.5">
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1736536205394-e949c13d9859?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0OHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1744039016480-1d95040fa25d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1747592771443-e15f155b1faf?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1759434188986-58432949b5a4?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=698"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
-                }
-              />
-              <ReelCard
-                url={
-                  "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
-                }
-              />
-            </div>
-          </>
-        </TabsContent>
-        <TabsContent value="mentioned">
-          <h1 className="my-2 text-center font-semibold">
-            Mentioned posts will display here
-          </h1>
-        </TabsContent>
-      </Tabs>
-    </div>
-    
-      <PostOverlay postData={currentOverlayPost} userData={userData} openPostOverlay={openPostOverlay} setOpenPostOverlay={setOpenPostOverlay} />
+              <div ref={loadMoreRef} className="h-10" />
+            </>
+          </TabsContent>
+          <TabsContent value="reel" className={"border-1 border-amber-600"}>
+            <>
+              <h2 className="text-center font-bold">Reels</h2>
+              <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-5 gap-0.5">
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1736536205394-e949c13d9859?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0OHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1744039016480-1d95040fa25d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1747592771443-e15f155b1faf?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=687"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1759434188986-58432949b5a4?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=698"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
+                  }
+                />
+                <ReelCard
+                  url={
+                    "https://images.unsplash.com/photo-1731531992660-d63e738c0b05?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxmZWF0dXJlZC1waG90b3MtZmVlZHw0Nnx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=60&w=500"
+                  }
+                />
+              </div>
+            </>
+          </TabsContent>
+          <TabsContent value="mentioned">
+            <h1 className="my-2 text-center font-semibold">
+              Mentioned posts will display here
+            </h1>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <PostOverlay
+        postData={currentOverlayPost}
+        userData={userData}
+        openPostOverlay={openPostOverlay}
+        setOpenPostOverlay={setOpenPostOverlay}
+      />
+      
     </>
   );
 }
 
-function PostCard({ post,userData, setCurrentOverlayPost, setOpenPostOverlay }) {
+function PostCard({
+  post,
+  userData,
+  setCurrentOverlayPost,
+  setOpenPostOverlay,
+}) {
   return (
     <>
       <div className="relative overflow-hidden group cursor-pointer">
@@ -504,18 +562,18 @@ function PostCard({ post,userData, setCurrentOverlayPost, setOpenPostOverlay }) 
         <p></p>
         <div
           onClick={() => {
-            setCurrentOverlayPost(post)
-            setOpenPostOverlay(true)
-
+            setCurrentOverlayPost(post);
+            setOpenPostOverlay(true);
           }}
-         className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/70 active:bg-black/80"
-         >
+          className="absolute opacity-0 group-hover:opacity-100 inset-0 bg-black/70 active:bg-black/80"
+        >
           <div className="flex justify-center items-center gap-4.5 h-full">
             <div className="flex flex-row gap-1">
               <Heart fill="currentColor" /> <span>{post.totalLikes}</span>
             </div>
             <div className="flex flex-row gap-1">
-              <MessageCircle fill="currentColor" /> <span>{post.totalComments}</span>
+              <MessageCircle fill="currentColor" />{" "}
+              <span>{post.totalComments}</span>
             </div>
           </div>
         </div>

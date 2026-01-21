@@ -478,7 +478,7 @@ const removeAvatar = asyncHandler(async (req, res) => {
 const getUserProfile = asyncHandler(async (req, res) => {
    // const userId = req.user?._id;
    const { username } = req.params;
-   console.log(req.params);
+   // console.log(req.params);
 
    const user = await User.findOne({ username: username });
 

@@ -65,24 +65,17 @@ const toggleFollow = asyncHandler(async (req, res) => {
 const getFollowers = asyncHandler(async (req, res) => {
    const { userId } = req.params;
    const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
-   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 10;
-   const skip = (page - 1) * limit;
+   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
 
    if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "userId is not valid");
    }
 
-   const followers = await Follow.aggregate([
+   const followersAggregate = Follow.aggregate([
       {
          $match: {
             followee: new mongoose.Types.ObjectId(userId),
          },
-      },
-      {
-         $skip: skip,
-      },
-      {
-         $limit: limit,
       },
       {
          $lookup: {
@@ -92,10 +85,44 @@ const getFollowers = asyncHandler(async (req, res) => {
             as: "follower",
             pipeline: [
                {
+                  $lookup: {
+                     from: "follows",
+                     let: { userId: "$_id" },
+                     pipeline: [
+                        {
+                           $match: {
+                              $expr: {
+                                 $and: [
+                                    { $eq: ["$followee", "$$userId"] },
+                                    {
+                                       $eq: [
+                                          "$follower",
+                                          new mongoose.Types.ObjectId(
+                                             req.user?._id
+                                          ),
+                                       ],
+                                    },
+                                 ],
+                              },
+                           },
+                        },
+                     ],
+                     as: "isFollowing",
+                  },
+               },
+               {
+                  $addFields: {
+                     isFollowing: {
+                        $gt: [{ $size: "$isFollowing" }, 0],
+                     },
+                  },
+               },
+               {
                   $project: {
                      username: 1,
                      avatar: 1,
                      fullname: 1,
+                     isFollowing: 1,
                   },
                },
             ],
@@ -113,6 +140,11 @@ const getFollowers = asyncHandler(async (req, res) => {
       },
    ]);
 
+   const followers = await Follow.aggregatePaginate(followersAggregate, {
+      page: page,
+      limit: limit,
+   });
+
    return res
       .status(200)
       .json(new ApiResponse(200, followers, "followers fetched successfully"));
@@ -121,24 +153,17 @@ const getFollowers = asyncHandler(async (req, res) => {
 const getFollowing = asyncHandler(async (req, res) => {
    const { userId } = req.params;
    const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
-   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 10;
-   const skip = (page - 1) * limit;
+   const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 5;
 
    if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "userId is not valid");
    }
 
-   const following = await Follow.aggregate([
+   const followingAggregate = Follow.aggregate([
       {
          $match: {
             follower: new mongoose.Types.ObjectId(userId),
          },
-      },
-      {
-         $skip: skip,
-      },
-      {
-         $limit: limit,
       },
       {
          $lookup: {
@@ -148,10 +173,44 @@ const getFollowing = asyncHandler(async (req, res) => {
             as: "followee",
             pipeline: [
                {
+                  $lookup: {
+                     from: "follows",
+                     let: { userId: "$_id" },
+                     pipeline: [
+                        {
+                           $match: {
+                              $expr: {
+                                 $and: [
+                                    { $eq: ["$followee", "$$userId"] },
+                                    {
+                                       $eq: [
+                                          "$follower",
+                                          new mongoose.Types.ObjectId(
+                                             req.user?._id
+                                          ),
+                                       ],
+                                    },
+                                 ],
+                              },
+                           },
+                        },
+                     ],
+                     as: "isFollowing",
+                  },
+               },
+               {
+                  $addFields: {
+                     isFollowing: {
+                        $gt: [{ $size: "$isFollowing" }, 0],
+                     },
+                  },
+               },
+               {
                   $project: {
                      username: 1,
                      avatar: 1,
                      fullname: 1,
+                     isFollowing: 1,
                   },
                },
             ],
@@ -168,6 +227,11 @@ const getFollowing = asyncHandler(async (req, res) => {
          $replaceRoot: { newRoot: "$followee" },
       },
    ]);
+
+   const following = await Follow.aggregatePaginate(followingAggregate, {
+      page: page,
+      limit: limit,
+   });
 
    return res
       .status(200)

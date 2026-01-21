@@ -138,13 +138,63 @@ const getAllUserPosts = asyncHandler(async (req, res) => {
    if (!mongoose.Types.ObjectId.isValid(userId)) {
       throw new ApiError(400, "userId is not valid");
    }
-   console.log(req.query.type, typeof req.query.type);
 
    const posts = await Post.aggregate([
       {
          $match: {
             owner: new mongoose.Types.ObjectId(userId),
             type: type,
+         },
+      },
+      {
+         $lookup: {
+            from: "users",
+            foreignField: "_id",
+            localField: "owner",
+            as: "owner",
+            pipeline: [
+               {
+                  $lookup: {
+                     from: "follows",
+                     let: { userId: "$_id" },
+                     pipeline: [
+                        {
+                           $match: {
+                              $expr: {
+                                 $and: [
+                                    { $eq: ["$followee", "$$userId"] },
+                                    {
+                                       $eq: [
+                                          "$follower",
+                                          new mongoose.Types.ObjectId(
+                                             req.user?._id
+                                          ),
+                                       ],
+                                    },
+                                 ],
+                              },
+                           },
+                        },
+                     ],
+                     as: "isFollowing",
+                  },
+               },
+               {
+                  $addFields: {
+                     isFollowing: {
+                        $gt: [{ $size: "$isFollowing" }, 0],
+                     }
+                  },
+               },
+               {
+                  $project: {
+                     username: 1,
+                     avatar: 1,
+                     fullname: 1,
+                     isFollowing: 1,
+                  },
+               },
+            ],
          },
       },
       {
@@ -176,6 +226,7 @@ const getAllUserPosts = asyncHandler(async (req, res) => {
             hasLiked: {
                $gt: [{ $size: "$userLike" }, 0],
             },
+            owner: { $first: "$owner" },
          },
       },
       {

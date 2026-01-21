@@ -212,6 +212,26 @@ const unlikePost = async function (postId) {
   }
 };
 
+const addComment = async function (postId,text) {
+  try {
+    const response = await axios({
+      url: `/posts/${postId}/comments`,
+      data: {
+        text
+      },
+      method: "post",
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 export {
   createPost,
@@ -225,5 +245,6 @@ export {
   getUserStories,
   getPostById,
   likePost,
-  unlikePost
+  unlikePost,
+  addComment
 };

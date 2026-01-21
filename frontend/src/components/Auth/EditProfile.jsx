@@ -347,7 +347,7 @@ function EditProfile() {
 
         // onOpenChange={() => setDialogOpen(false)}
       >
-        <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl">
+        <DialogContent className="sm:max-w-md dark:bg-neutral-900 rounded-3xl border-none">
           <DialogHeader>
             <DialogTitle className={"text-center"}>
               Change Profile Photo

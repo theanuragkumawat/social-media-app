@@ -4,10 +4,9 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
     baseUrl: import.meta.env.VITE_BASE_URL,
-    credentials:"include"
+    credentials: "include",
   }),
   endpoints: (builder) => ({
-
     //GET ALL USER PROILE POSTS
     getAllUserPosts: builder.query({
       query: ({ userId, page, type }) => ({
@@ -31,7 +30,11 @@ export const apiSlice = createApi({
         }
       },
       forceRefetch({ currentArg, previousArg }) {
-        return currentArg?.page !== previousArg?.page;
+        return (
+          currentArg?.page !== previousArg?.page ||
+          currentArg?.userId !== previousArg?.userId ||
+          currentArg?.type !== previousArg?.type
+        );
       },
     }),
 
@@ -42,10 +45,97 @@ export const apiSlice = createApi({
         method: "GET",
         credentials: "include",
       }),
-
     }),
-    
+
+    getPostComments: builder.query({
+      query: ({ postId, page }) => ({
+        url: `posts/${postId}/comments?page=${page}`,
+        method: "GET",
+        credentials: "include",
+      }),
+      serializeQueryArgs: ({ queryArgs, endpointName }) => {
+        // Unique key for cache: Different  per Tab (posts vs reels)
+        return `${queryArgs.postId}`;
+      },
+      merge: (currentCache, newItems) => {
+        currentCache.data = {
+          hasNextPage: newItems.data.hasNextPage,
+          nextPage: newItems.data.nextPage,
+          page: newItems.data.page,
+          totalDocs: newItems.data.totalDocs,
+          totalPages: newItems.data.totalPages,
+          docs: [...currentCache.data.docs, ...newItems.data.docs],
+        };
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.page !== previousArg?.page;
+      },
+    }),
+
+    getUserFollowers: builder.query({
+      query: ({ userId, page, type }) => ({
+        url: `users/${userId}/followers?page=${page}`,
+        method: "GET",
+        credentials: "include",
+      }),
+      serializeQueryArgs: ({ queryArgs, endpointName }) => {
+        // Unique key for cache: Different  per Tab (posts vs reels)
+        return `${queryArgs.userId}-${queryArgs.type}`;
+      },
+      merge: (currentCache, newItems, { arg }) => {
+        if (arg.page == 1) {
+          currentCache.data = newItems.data;
+        } else {
+          currentCache.data = {
+            hasNextPage: newItems.data.hasNextPage,
+            nextPage: newItems.data.nextPage,
+            page: newItems.data.page,
+            totalDocs: newItems.data.totalDocs,
+            totalPages: newItems.data.totalPages,
+            docs: [...currentCache.data.docs, ...newItems.data.docs],
+          };
+        }
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.page !== previousArg?.page;
+      },
+    }),
+
+    getUserFollowing: builder.query({
+      query: ({ userId, page, type }) => ({
+        url: `users/${userId}/following?page=${page}`,
+        method: "GET",
+        credentials: "include",
+      }),
+      serializeQueryArgs: ({ queryArgs, endpointName }) => {
+        // Unique key for cache: Different  per Tab (posts vs reels)
+        return `${queryArgs.userId}-${queryArgs.type}`;
+      },
+      merge: (currentCache, newItems, { arg }) => {
+        if (arg.page == 1) {
+          currentCache.data = newItems.data;
+        } else {
+          currentCache.data = {
+            hasNextPage: newItems.data.hasNextPage,
+            nextPage: newItems.data.nextPage,
+            page: newItems.data.page,
+            totalDocs: newItems.data.totalDocs,
+            totalPages: newItems.data.totalPages,
+            docs: [...currentCache.data.docs, ...newItems.data.docs],
+          };
+        }
+      },
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.page !== previousArg?.page;
+      },
+    }),
   }),
 });
 
-export const { useGetAllUserPostsQuery, useGetAllFeedStoriesQuery } = apiSlice;
+export const {
+  useGetAllUserPostsQuery,
+  useGetAllFeedStoriesQuery,
+  useGetPostCommentsQuery,
+  useGetUserFollowersQuery,
+  useGetUserFollowingQuery,
+} = apiSlice;
