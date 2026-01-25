@@ -30,6 +30,7 @@ import followRouter from "./routes/follow.route.js"
 import commentRouter from "./routes/comment.route.js"
 import likeRouter from "./routes/like.route.js"
 import storyRouter from "./routes/story.route.js"
+import highlightRouter from "./routes/highlight.route.js"
 
 //Routes
 app.use('/api/v1/healthcheck',healthCheckRouter);
@@ -56,7 +57,9 @@ app.use('/api/v1/comments',likeRouter)
 app.use('/api/v1/stories',storyRouter)
 app.use('/api/v1/users',storyRouter)
 
-
+//highlight routes
+app.use('/api/v1/highlights',highlightRouter)
+app.use('/api/v1/users',highlightRouter)
 
 app.use(errorHandler);
 export { app };

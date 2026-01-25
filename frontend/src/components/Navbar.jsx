@@ -437,7 +437,6 @@ function Navbar() {
 
 //for posts
 function PostWizard({ setActiveDialog }) {
-  const steps = ["Upload", "Details"];
   const [activeStep, setActiveStep] = useState(0);
 
   const next = () => setActiveStep((prev) => prev + 1);

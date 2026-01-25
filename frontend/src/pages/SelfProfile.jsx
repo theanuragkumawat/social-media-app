@@ -2,15 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router";
 import {
-  ChevronDown,
   Clapperboard,
   Contact,
   Eye,
   Grid3x3,
   Heart,
   MessageCircle,
-  UserPlus,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Plus,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -21,8 +20,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
-
-import { getUserProfile } from "../utils/config";
+import HighlightDialog from "../components/HighlightDialog.jsx";
+import { getUserHighlights, getUserProfile } from "../utils/config";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { useGetAllUserPostsQuery } from "../store/api/apiSlice.js";
 
@@ -31,10 +30,10 @@ function SelfProfile() {
   const userData = useSelector((state) => state.auth.userData);
 
   const [userProfileData, setUserProfileData] = useState(null);
-  
+
   const getUserProfileInfo = async () => {
-    if(!userData?.username){
-      return
+    if (!userData?.username) {
+      return;
     }
     try {
       const response = await getUserProfile(userData.username);
@@ -50,14 +49,14 @@ function SelfProfile() {
   };
 
   useEffect(() => {
-    getUserProfileInfo();
+    if (userData?._id) getUserProfileInfo();
   }, [userData]);
 
   return (
     <>
       <div className="col-span-12  md:col-span-10 md:col-start-3 lg:col-span-9 lg:col-start-4 xl:col-span-10 xl:col-start-3 mt-4">
         <div className="flex justify-center items-center   flex-col w-full">
-          <UserOwnProfile userData={userData} />
+          {userData && <UserOwnProfile userData={userData} />}
         </div>
         {userData?._id && (
           <UserUploads userId={userData._id} totalPosts={userData.postsCount} />
@@ -68,6 +67,25 @@ function SelfProfile() {
 }
 
 const UserOwnProfile = function ({ userData }) {
+  const [openHighlightDialog, setOpenHighlightDialog] = useState(false);
+  const [highlights, setHighlights] = useState([]);
+
+  async function fetchHighlights() {
+    try {
+      const response = await getUserHighlights(userData._id);
+      setHighlights(response.data.data);
+      // console.log("Highlights:", response.data.data);
+    } catch (error) {
+      console.error("Error fetching highlights:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (userData?._id) {
+      fetchHighlights();
+    }
+  }, [userData]);
+
   return (
     <>
       <div className="flex flex-row mt-6 gap-6 sm:w-xl">
@@ -116,10 +134,22 @@ const UserOwnProfile = function ({ userData }) {
             <p className="!whitespace-pre-line text-sm">
               {`${userData && userData.bio ? userData.bio : ""}`}
             </p>
-            {
-              userData && userData.website && 
-              <p className="text-blue-400 leading-6 text-sm "><a target="_blank" rel="noopener noreferrer" className="flex justify-center items-center gap-1" href={userData.website.startsWith("http") ? userData.website : `https://${userData.website}`} ><LinkIcon size={15}/> {userData.website}</a></p>
-            }
+            {userData && userData.website && (
+              <p className="text-blue-400 leading-6 text-sm ">
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex justify-center items-center gap-1"
+                  href={
+                    userData.website.startsWith("http")
+                      ? userData.website
+                      : `https://${userData.website}`
+                  }
+                >
+                  <LinkIcon size={15} /> {userData.website}
+                </a>
+              </p>
+            )}
             <p className="text-sm mt-1.5">
               Followed by{" "}
               <span className="font-bold">rjabhinavv, jitendrak1</span> + 2 more
@@ -154,55 +184,87 @@ const UserOwnProfile = function ({ userData }) {
         </button>
       </div>
       {/* Highlites */}
-      <div className="mt-10 md:gap-1  max-w-full">
-        <Carousel
-          className=" max-w-xl "
-          opts={{
-            align: "start",
-            slidesToScroll: 6,
-          }}
-        >
-          <CarouselContent className="-ml-1 w-full">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 4, 5, 6, 7].map((item, index) => (
-              <CarouselItem
-                key={index}
-                className={"pl-1 sm:basis-1/6 basis-1/5"}
-              >
+      {highlights?.length > 0 && (
+        <div className="mt-10 md:gap-1  max-w-full">
+          <Carousel
+            className=" max-w-xl "
+            opts={{
+              align: "start",
+              slidesToScroll: 6,
+            }}
+          >
+            <CarouselContent className="-ml-1 w-full">
+              {highlights?.map((item, index) => (
+                <CarouselItem
+                  key={index}
+                  className={"pl-1 sm:basis-1/6 basis-1/5"}
+                >
+                  <div className="p-0 md:p-3 w-fit">
+                    <Card className="bg-transparent border-none w-fit">
+                      <CardContent className="px-0 flex flex-col items-center">
+                        <div className="pb-4 cursor-pointer active:scale-97 text-center">
+                          <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
+                            <img
+                              className="w-full h-full object-cover rounded-full select-none"
+                              src={item.cover ? item.cover : null}
+                            />
+                          </div>
+
+                          <p className="text-center text-xs font-semibold text-neutral-50 mt-3">
+                            {item.title}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+              <CarouselItem className={"pl-1 sm:basis-1/6 basis-1/5"}>
                 <div className="p-0 md:p-3 w-fit">
                   <Card className="bg-transparent border-none w-fit">
                     <CardContent className="px-0 flex flex-col items-center">
-                      <div className="pb-4 cursor-pointer active:scale-97 text-center">
-                        <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
-                          <img
-                            className="w-full h-full object-cover rounded-full select-none"
-                            src="https://images.unsplash.com/photo-1696834137457-8872b6c525f4?..."
-                          />
+                      <div
+                        onClick={() => setOpenHighlightDialog(true)}
+                        className="pb-4 cursor-pointer active:scale-97 text-center "
+                      >
+                        <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 bg-neutral-800 ring-offset-neutral-950 ring-neutral-700 rounded-full flex items-center justify-center">
+                          <div className="">
+                            <Plus className="text-neutral-400 size-14" />
+                          </div>
                         </div>
 
                         <p className="text-center text-xs font-semibold text-neutral-50 mt-3">
-                          Meetup
+                          New
                         </p>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
               </CarouselItem>
-            ))}
-          </CarouselContent>
-          <CarouselPrevious className={"hidden sm:flex z-30"} />
+            </CarouselContent>
+            <CarouselPrevious className={"hidden sm:flex z-30"} />
 
-          <CarouselNext className={"hidden sm:flex"} />
-        </Carousel>
-      </div>
-
-      {/* posts */}
+            <CarouselNext className={"hidden sm:flex"} />
+          </Carousel>
+        </div>
+      )}
+      {
+        /* Highlight Dialog Component */
+        userData && (
+          <HighlightDialog
+            openHighlightDialog={openHighlightDialog}
+            setOpenHighlightDialog={setOpenHighlightDialog}
+            userId={userData?._id}
+          />
+        )
+      }
     </>
   );
 };
 
 function UserUploads({ userId, totalPosts }) {
   const [activeTab, setActiveTab] = useState("post");
-    const loadMoreRef = useRef(null)
+  const loadMoreRef = useRef(null);
   const [page, setPage] = useState(1);
   const { data, isLoading, isFetching } = useGetAllUserPostsQuery({
     userId,
@@ -215,22 +277,21 @@ function UserUploads({ userId, totalPosts }) {
   const hasMore = page * 5 < totalPosts;
   // console.log(data);
 
-  
-    useEffect(() => {
-      if (!loadMoreRef.current) return;
-  
-      const observer = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting && hasMore && !isFetching) {
+  useEffect(() => {
+    if (!loadMoreRef.current) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && hasMore && !isFetching) {
           setPage((prev) => prev + 1);
         }
       },
-      { threshold: 1 }
-    )
-  
-    observer.observe(loadMoreRef.current)
+      { threshold: 1 },
+    );
+
+    observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-    },[hasMore,isFetching])
+  }, [hasMore, isFetching]);
 
   return (
     <div className="mt-8 w-full lg:px-10 xl:px-30 2xl:px-50">
@@ -303,7 +364,7 @@ function UserUploads({ userId, totalPosts }) {
                 {isFetching || isLoading ? "Loading more..." : "Load More"}
               </button>
             )} */}
-             <div ref={loadMoreRef} className="h-4" />
+            <div ref={loadMoreRef} className="h-4" />
           </>
         </TabsContent>
         <TabsContent value="reel" className={"border-1 border-amber-600"}>

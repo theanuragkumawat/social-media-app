@@ -2,14 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useParams } from "react-router";
 import {
-  ChevronDown,
   Clapperboard,
   Contact,
   Eye,
   Grid3x3,
   Heart,
   MessageCircle,
-  UserPlus,
   Link as LinkIcon,
   Loader,
 } from "lucide-react";
@@ -159,7 +157,9 @@ const UserOwnProfile = function ({
   };
 
   useEffect(() => {
-    fetchStories();
+    if (userData?._id) {
+      fetchStories();
+    }
   }, [userData]);
 
   return (

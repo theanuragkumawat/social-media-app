@@ -145,6 +145,8 @@ const getAllFeedStories = async function () {
 };
 
 const getUserStories = async function (userId) {
+  console.log(userId);
+  
   try {
     const response = await axios({
       url: `/users/${userId}/stories`,
@@ -232,6 +234,40 @@ const addComment = async function (postId,text) {
   }
 };
 
+const createHighlight = async function (data) {
+  try {
+    const response = await axios({
+      url: "/highlights",
+      method: "post",
+      withCredentials: true,
+      data: data,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getUserHighlights = async function (userId) {
+  try {
+    const response = await axios({
+      url: `/users/${userId}/highlights`,
+      method: "get",
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export {
   createPost,
@@ -246,5 +282,7 @@ export {
   getPostById,
   likePost,
   unlikePost,
-  addComment
+  addComment,
+  createHighlight,
+  getUserHighlights,
 };

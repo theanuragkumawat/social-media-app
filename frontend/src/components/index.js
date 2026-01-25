@@ -8,6 +8,7 @@ import SearchSheet from "./SearchSheet";
 import PostOverlay from "./PostOverlay";
 import PostComments from "./PostComments";
 import UserListOverlay from "./UserListOverlay";
+import HighlightDialog from "./HighlightDialog";
 
 export {
     Login,
@@ -19,5 +20,6 @@ export {
     SearchSheet,
     PostOverlay,
     PostComments,
-    UserListOverlay
+    UserListOverlay,
+    HighlightDialog
 }

@@ -6,7 +6,7 @@ const storySchema = new mongoose.Schema(
          type: mongoose.Schema.Types.ObjectId,
          ref: "User",
          required: true,
-         index:true
+         index: true,
       },
       mentions: [
          {
@@ -24,6 +24,10 @@ const storySchema = new mongoose.Schema(
          type: String,
          required: true,
       },
+      cover: {
+         type: String,
+      },
+
       status: {
          type: String,
          enum: ["public", "close_friends", "archive"],
