@@ -1,5 +1,5 @@
 import {
-    Bookmark,
+  Bookmark,
   Dot,
   Ellipsis,
   EllipsisVertical,
@@ -13,11 +13,41 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Separator } from "@/components/ui/separator";
+import {
+  useLikePostMutation,
+  useUnlikePostMutation,
+} from "../store/api/apiSlice";
 
-function Post({ user, time, imageUrl, likes = 0, commentCount = 0 }) {
+function Post({
+  postData,
+  user,
+  postId,
+  time,
+  imageUrl,
+  caption,
+  likes = 0,
+  commentCount = 0,
+  hasLiked,
+  setCurrentOverlayPost,
+  setOpenPostOverlay,
+}) {
+  const [likePost, { isLoading: isLikeLoading }] = useLikePostMutation();
+  const [unlikePost, { isLoading: isUnlikeLoading }] = useUnlikePostMutation();
+  const isActionLoading = isLikeLoading || isUnlikeLoading;
+
+  const handleLikeClick = () => {
+    // Agar pehle se liked hai, toh Unlike API call karo
+    if (hasLiked) {
+      unlikePost(postId);
+    }
+    // Agar liked nahi hai, toh Like API call karo
+    else {
+      likePost(postId);
+    }
+  };
   return (
     <>
-      <div className="max-w-md mx-auto text-white rounded-xs overflow-hidden mt-5">
+      <div className="w-md mx-auto text-white rounded-xs overflow-hidden mt-5">
         {/* Header */}
         <div className="flex items-center pb-3">
           <img
@@ -53,37 +83,64 @@ function Post({ user, time, imageUrl, likes = 0, commentCount = 0 }) {
 
         {/* Action & Stats */}
         <div className="py-2 px-1">
-            <div className="flex flex-row justify-between items-center">
-
-            
-          <div className="flex items-center gap-3 mb-2 cursor-pointer dark:text-neutral-50 ">
-            <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
-              <Heart size={27} strokeWidth={2} />
-            </button>
-            <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
-              <MessageCircle
-                size={25}
-                strokeWidth={2}
-                className="transform scale-x-[-1]"
-              />
-            </button>
-            <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
-              <Send size={25} strokeWidth={2} className="rotate-16" />
-            </button>
-          </div>
-          <div className="flex items-center">
-            <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
+          <div className="flex flex-row justify-between items-center">
+            <div className="flex items-center gap-3 mb-2 cursor-pointer dark:text-neutral-50 ">
+              <button
+                className=" text-xl cursor-pointer "
+                onClick={handleLikeClick}
+                disabled={isActionLoading}
+              >
+                <Heart
+                  size={27}
+                  strokeWidth={2}
+                  className={`${hasLiked ? "text-rose-500 fill-current" : "dark:text-neutral-50"} `}
+                />
+              </button>
+              <button
+                className="text-xl cursor-pointer hover:dark:text-neutral-400"
+                onClick={() => {
+                  setCurrentOverlayPost(postData);
+                  setOpenPostOverlay(true);
+                }}
+              >
+                <MessageCircle
+                  size={25}
+                  strokeWidth={2}
+                  className="transform scale-x-[-1]"
+                />
+              </button>
+              <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
+                <Send size={25} strokeWidth={2} className="rotate-16" />
+              </button>
+            </div>
+            <div className="flex items-center">
+              <button className=" text-xl cursor-pointer hover:dark:text-neutral-400">
                 <Bookmark size={25} strokeWidth={2} className="" />
-            </button>
-          </div>
+              </button>
+            </div>
           </div>
           <div className="flex justify-start flex-col gap-1">
             <p className="font-semibold text-sm text-start text-neutral-50">
               {likes.toLocaleString()} likes
             </p>
-            <p className="text-sm text-gray-400 text-start">
-              View all {commentCount} comments
-            </p>
+            {caption && (
+              <p className="text-start text-sm">
+                <span className="font-bold mr-1.5">{user.username}</span>
+                {caption}
+              </p>
+            )}
+
+            {commentCount ? (
+              <button className="text-sm text-gray-400 text-start"
+              onClick={() => {
+                  setCurrentOverlayPost(postData);
+                  setOpenPostOverlay(true);
+                }}
+              >
+                View all {commentCount} comments
+              </button>
+            ) : null}
+
             <div className="">
               <input
                 type="text"
@@ -94,7 +151,7 @@ function Post({ user, time, imageUrl, likes = 0, commentCount = 0 }) {
           </div>
         </div>
         <div className="mt-2">
-        <Separator />
+          <Separator />
         </div>
       </div>
     </>

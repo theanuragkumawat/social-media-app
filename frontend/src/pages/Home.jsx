@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Post, StoryViewer } from "../components";
+import { useEffect, useState, useRef, useCallback } from "react";
+import { Post, PostOverlay, StoryViewer } from "../components";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -14,6 +14,8 @@ import { getCurrentUser } from "../utils/auth.js";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { CornerLeftUpIcon } from "lucide-react";
 import { getAllFeedStories } from "../utils/config.js";
+import { useGetUserFeedQuery, useLikePostMutation,useUnlikePostMutation } from "../store/api/apiSlice.js";
+import moment from "moment";
 
 function Home() {
   const dispatch = useDispatch();
@@ -68,18 +70,39 @@ function Home() {
   // useEffect(() => {
   //   getUser();
   // }, []);
+  const [cursor, setCursor] = useState(null);
+  const { data, isLoading, isFetching } = useGetUserFeedQuery({ cursor });
+  const feedPosts = data?.data?.posts;
+  const hasNextPage = data?.data?.hasNextPage;
+  const nextCursor = data?.data?.nextCursor;
 
-  const [activeDialog, setActiveDialog] = useState(null);
-  // console.log(activeDialog);
-  // console.log(showStoryViewer);
+  const observer = useRef();
+  const lastPostElementRef = useCallback(
+    (node) => {
+      if (isFetching) return;
+      if (observer.current) observer.current.disconnect();
 
-  const time = "2d";
-  const likes = 106437;
-  const commentCount = 134;
-  const imageUrl =
-    "https://images.unsplash.com/photo-1696834137451-f52f471a58bc?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasNextPage) {
+          setCursor(nextCursor);
+        }
+      });
 
-  // Upload Post
+      if (node) observer.current.observe(node);
+    },
+    [isFetching, hasNextPage, nextCursor],
+  );
+
+  const handleLoadMore = () => {
+    if (hasNextPage && nextCursor) {
+      setCursor(nextCursor);
+    }
+  };
+
+  console.log("Feed data:", feedPosts);
+
+ const [openPostOverlay,setOpenPostOverlay] = useState(false)
+ const [currentOverlayPost, setCurrentOverlayPost] = useState(null);
 
   return (
     <>
@@ -119,15 +142,14 @@ function Home() {
                           >
                             {/* <span className="text-3xl font-semibold">{index+1}</span> */}
                             <div className="size-19 bg-black p-[3px] rounded-full">
-
-                            <img
-                              className=" size-full object-cover rounded-full select-none   "
-                              src={item.user.avatar}
-                              alt=""
+                              <img
+                                className=" size-full object-cover rounded-full select-none   "
+                                src={item.user.avatar}
+                                alt=""
                               />
-                              </div>
+                            </div>
                           </div>
-                          <p className="text-xs mt-2 text-neutral-50 select-none">
+                          <p className="text-xs mt-2 text-neutral-50 select-none w-20 truncate mx-auto">
                             {item.user.username}
                           </p>
                         </CardContent>
@@ -152,43 +174,68 @@ function Home() {
 
         {/* posts */}
         <div className=" flex items-center justify-center flex-col mt-3">
-          <Post
-            user={{
-              username: "kedi.kopek.sevenler",
-              avatar:
-                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            }}
-            time={time}
-            imageUrl={imageUrl}
-            likes={likes}
-            commentCount={commentCount}
-          />
-          <Post
-            user={{
-              username: "kedi.kopek.sevenler",
-              avatar:
-                "https://plus.unsplash.com/premium_photo-1757423356231-4b51742cccf6?q=80&w=200&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            }}
-            time={time}
-            imageUrl={
-              "https://images.unsplash.com/flagged/photo-1578288399681-afc560fdf8f8?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            }
-            likes={likes}
-            commentCount={commentCount}
-          />
-          <Post
-            user={{
-              username: "kedi.kopek.sevenler",
-              avatar:
-                "https://plus.unsplash.com/premium_photo-1757423356231-4b51742cccf6?q=80&w=200&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            }}
-            time={time}
-            imageUrl={
-              "https://images.unsplash.com/photo-1758846182772-26919ad3c4cf?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
-            }
-            likes={likes}
-            commentCount={commentCount}
-          />
+          {isLoading && !feedPosts?.length ? (
+            <>
+              <PostSkeleton />
+              <PostSkeleton />
+            </>
+          ) : (
+            feedPosts?.map((post, index) => {
+              const isLastPost = feedPosts.length === index + 1;
+
+              return (
+                <div
+                  key={index}
+                  // Agar aakhri post hai, toh ref attach karo
+                  ref={isLastPost ? lastPostElementRef : null}
+                  className="w-full flex justify-center"
+                >
+                  <Post
+                  postData={post}
+                    user={{
+                      username: post.owner.username,
+                      avatar: post.owner.avatar,
+                    }}
+                    postId={post._id}
+                    time={moment(post.createdAt).fromNow()}
+                    imageUrl={post.media[0]}
+                    likes={post.totalLikes}
+                    commentCount={post.totalComments}
+                    hasLiked={post.hasLiked}
+                    caption={post.caption ? post.caption : null}
+
+                    setOpenPostOverlay={setOpenPostOverlay}
+                    setCurrentOverlayPost={setCurrentOverlayPost}
+
+
+                  />
+                </div>
+              );
+            })
+          )}
+
+          {/* Loaders & Messages */}
+          {isFetching && feedPosts?.length > 0 && (
+            <div className="w-full flex justify-center mt-2">
+              <PostSkeleton />
+            </div>
+          )}
+          {!hasNextPage && feedPosts?.length > 0 && (
+            <h4 className="my-4 text-neutral-400 text-sm">
+              You're all caught up!
+            </h4>
+          )}
+
+          {/* //button */}
+          {hasNextPage && (
+            <button
+              onClick={handleLoadMore}
+              disabled={isFetching} // API call chalu ho toh disable kar do
+              className={`mt-2 text-sm text-white font-bold px-5 py-2 rounded-2xl border-2 border-neutral-600 hover:text-gray-300 cursor-pointer active:scale-95 transition-all ${isFetching ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {isFetching ? "Loading..." : "More"}
+            </button>
+          )}
         </div>
       </div>
       <div className="right-part col-span-3 hidden xl:block lg:px-2 mt-2">
@@ -261,6 +308,13 @@ function Home() {
           setShowStoryViewer={setShowStoryViewer}
         />
       )}
+
+      <PostOverlay
+              postData={currentOverlayPost}
+              // userData={""}
+              openPostOverlay={openPostOverlay}
+              setOpenPostOverlay={setOpenPostOverlay}
+            />
     </>
   );
 }
@@ -298,6 +352,41 @@ function UserCard({ username, avatar, name }) {
         <button className="text-sky-400 font-semibold cursor-pointer hover:dark:text-sky-300">
           Switch
         </button>
+      </div>
+    </div>
+  );
+}
+
+// Skeleton component - Tailwind ka use karke
+function PostSkeleton() {
+  return (
+    <div className="w-full max-w-[470px] mx-auto mb-6 bg-transparent border-b border-neutral-800 pb-4 animate-pulse flex flex-col items-center">
+      {/* Post Header */}
+      <div className="w-full flex items-center gap-3 mb-3 px-2">
+        <div className="size-10 rounded-full bg-neutral-800"></div>{" "}
+        {/* Avatar Skeleton */}
+        <div className="flex flex-col gap-2">
+          <div className="w-24 h-3 bg-neutral-800 rounded"></div>{" "}
+          {/* Username Skeleton */}
+          <div className="w-16 h-2 bg-neutral-800 rounded"></div>{" "}
+          {/* Time Skeleton */}
+        </div>
+      </div>
+
+      {/* Post Image */}
+      <div className="w-full aspect-[4/5] sm:aspect-square bg-neutral-800 rounded-sm mb-3"></div>
+
+      {/* Post Actions (Like, Comment, etc) */}
+      <div className="w-full flex gap-4 mb-3 px-2">
+        <div className="size-6 bg-neutral-800 rounded-full"></div>
+        <div className="size-6 bg-neutral-800 rounded-full"></div>
+        <div className="size-6 bg-neutral-800 rounded-full"></div>
+      </div>
+
+      {/* Likes and Text Skeleton */}
+      <div className="w-full px-2 flex flex-col gap-2">
+        <div className="w-1/4 h-3 bg-neutral-800 rounded"></div>
+        <div className="w-1/3 h-3 bg-neutral-800 rounded"></div>
       </div>
     </div>
   );

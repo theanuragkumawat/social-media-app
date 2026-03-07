@@ -51,6 +51,11 @@ const postSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+postSchema.index({ owner: 1, createdAt: -1 })
+postSchema.index({ type: 1, createdAt: -1 })
+postSchema.index({ status: 1 })
+
+
 postSchema.plugin(mongooseAggregatePaginate)
 
 export const Post = mongoose.model("Post", postSchema);

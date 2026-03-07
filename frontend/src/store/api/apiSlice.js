@@ -129,6 +129,87 @@ export const apiSlice = createApi({
         return currentArg?.page !== previousArg?.page;
       },
     }),
+
+    getUserFeed: builder.query({
+      query: ({ cursor }) => ({
+        url: `users/feed`,
+        params: cursor ? { cursor } : {},
+        method: "GET",
+        credentials: "include",
+      }),
+
+      serializeQueryArgs: ({ endpointName }) => {
+        return endpointName;
+      },
+
+      merge: (currentCache, newItems) => {
+        if (newItems?.data?.posts) {
+          // Purane posts ke aage naye posts append kar do
+          currentCache.data.posts.push(...newItems.data.posts);
+          
+          // Cursor aur pagination info update kar do
+          currentCache.data.nextCursor = newItems.data.nextCursor;
+          currentCache.data.hasNextPage = newItems.data.hasNextPage;
+        }
+      },
+      
+      forceRefetch({ currentArg, previousArg }) {
+        return currentArg?.cursor !== previousArg?.cursor;
+      },
+    }),
+
+    likePost: builder.mutation({
+      query: (postId) => ({
+        url: `posts/${postId}/like`, // Apne backend ka route check kar lena
+        method: "POST", 
+        credentials: "include",
+      }),
+      async onQueryStarted(postId, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData("getUserFeed", undefined, (draft) => {
+            const post = draft.data.posts.find((p) => p._id === postId);
+            if (post && !post.hasLiked) {
+              post.totalLikes += 1;
+              post.hasLiked = true;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+          console.error("Like failed, reverting UI:", error);
+        }
+      },
+    }),
+
+    // 2. UNLIKE POST MUTATION
+    unlikePost: builder.mutation({
+      query: (postId) => ({
+        url: `posts/${postId}/like`, // Apne backend ka unlike route check kar lena
+        method: "DELETE", // Agar unlike ke liye POST use kar rahe ho, toh yahan method change kar lena
+        credentials: "include",
+      }),
+      async onQueryStarted(postId, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          apiSlice.util.updateQueryData("getUserFeed", undefined, (draft) => {
+            const post = draft.data.posts.find((p) => p._id === postId);
+            if (post && post.hasLiked) {
+              post.totalLikes -= 1;
+              post.hasLiked = false;
+            }
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch (error) {
+          patchResult.undo();
+          console.error("Unlike failed, reverting UI:", error);
+        }
+      },
+    }),
+
+
   }),
 });
 
@@ -138,4 +219,7 @@ export const {
   useGetPostCommentsQuery,
   useGetUserFollowersQuery,
   useGetUserFollowingQuery,
+  useGetUserFeedQuery,
+  useLikePostMutation,
+  useUnlikePostMutation
 } = apiSlice;

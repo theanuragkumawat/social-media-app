@@ -37,7 +37,7 @@ function UserListOverlay({
       setIsFollowUpdating((prev) => ({ ...prev, [id]: true }));
       const response = await toggleFollowUser(id);
       if (response) {
-        // const state = store.getState(); 
+        // const state = store.getState();
         // console.log("ALL QUERIES:", state.api.queries);
         dispatch(
           apiSlice.util.updateQueryData(

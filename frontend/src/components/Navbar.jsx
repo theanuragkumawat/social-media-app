@@ -1,29 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-  House,
-  Search,
-  Compass,
-  CirclePlus,
   Clapperboard,
-  MessageSquareText,
-  Heart,
-  User,
   ImagePlay,
   Aperture,
   Radio,
   XIcon,
   Images,
-  Loader,
-  CircleX,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Link, NavLink } from "react-router";
 import { GoHome, GoHomeFill } from "react-icons/go";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
@@ -154,15 +137,15 @@ function Navbar() {
                     key={item.name}
                     className="active:scale-96 rounded-xl px-2 cursor-pointer"
                   >
-                    <DropdownMenu>
+                    <DropdownMenu className={""}>
                       <DropdownMenuTrigger
                         asChild
-                        className={"active:scale-96 rounded-xl px-2"}
+                        className={"active:scale-96 rounded-xl px-2 "}
                       >
                         <div
                           key={item.name}
                           className={
-                            "flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2"
+                            "flex flex-row items-center gap-2.5 hover:dark:bg-neutral-800 py-2.5 pl-2 "
                           }
                         >
                           <>
@@ -183,15 +166,15 @@ function Navbar() {
                           </>
                         </div>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className={"w-45 p-1.5 rounded-sm "}>
+                      <DropdownMenuContent className={"w-45 p-1.5 rounded-2xl border-none "}>
                         <DropdownMenuItem
-                          className={"h-10 "}
+                          className={"h-10 cursor-pointer rounded-xl"}
                           onSelect={() =>
                             activeDialog == null && setActiveDialog("post")
                           }
                         >
                           <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                            <span>Post</span>
+                            <span className="text-sm font-semibold">Post</span>
                             <span className="flex justify-center items-center">
                               <ImagePlay
                                 className="dark:text-neutral-50 size-5"
@@ -201,11 +184,11 @@ function Navbar() {
                           </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className={"h-10"}
+                          className={"h-10 cursor-pointer rounded-xl"}
                           onSelect={() => setActiveDialog("story")}
                         >
                           <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                            <span>Story</span>
+                            <span className="text-sm font-semibold">Story</span>
                             <span className="flex justify-center items-center">
                               <Aperture
                                 className="dark:text-neutral-50 size-5"
@@ -215,11 +198,11 @@ function Navbar() {
                           </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className={"h-10"}
+                          className={"h-10 cursor-pointer rounded-xl"}
                           onSelect={() => setActiveDialog("reel")}
                         >
                           <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                            <span>Reel</span>
+                            <span className="text-sm font-semibold">Reel</span>
                             <span className="flex justify-center items-center">
                               <Clapperboard
                                 className="dark:text-neutral-50 size-5"
@@ -229,11 +212,11 @@ function Navbar() {
                           </div>
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          className={"h-10"}
+                          className={"h-10 cursor-pointer rounded-xl"}
                           onSelect={() => setActiveDialog("live")}
                         >
                           <div className="flex flex-row justify-between w-full dark:text-neutral-50">
-                            <span>Live Video</span>
+                            <span className="text-sm font-semibold">Live Video</span>
                             <span className="flex justify-center items-center">
                               <Radio
                                 className="dark:text-neutral-50 size-5"

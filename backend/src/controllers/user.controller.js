@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -12,6 +13,7 @@ import {
    emailOtpVerificationMailgenContent,
 } from "../utils/mail.js";
 import { Follow } from "../models/follow.model.js";
+import { Post } from "../models/post.model.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
    try {
@@ -32,7 +34,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 const registerUser = asyncHandler(async (req, res) => {
    const { email, username, fullname, password } = req.body;
    // console.log(req.body);
-   
 
    if (
       [email, username, fullname, password].some(
@@ -149,7 +150,7 @@ const loginUser = asyncHandler(async (req, res) => {
    }
 
    const isPasswordValid = await user.isPasswordCorrect(password);
-   console.log(isPasswordValid);
+   // console.log(isPasswordValid);
 
    if (!isPasswordValid) {
       throw new ApiError(404, "Invalid user credentials");
@@ -495,13 +496,20 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
    const isFollowedBy = await Follow.exists({
       follower: user._id,
-      followee: req.user?._id
-   })
+      followee: req.user?._id,
+   });
 
-
-   return res
-      .status(200)
-      .json(new ApiResponse(200, {...user.toObject(), isFollowing: !!isFollowing, isFollowedBy: !!isFollowedBy }, "User profile fetched successfully"));
+   return res.status(200).json(
+      new ApiResponse(
+         200,
+         {
+            ...user.toObject(),
+            isFollowing: !!isFollowing,
+            isFollowedBy: !!isFollowedBy,
+         },
+         "User profile fetched successfully"
+      )
+   );
 });
 
 const changeProfileDetails = asyncHandler(async (req, res) => {
@@ -533,7 +541,7 @@ const changeProfileDetails = asyncHandler(async (req, res) => {
 });
 
 const searchUsers = asyncHandler(async (req, res) => {
-   console.log(req.query);
+   // console.log(req.query);
 
    const { search, page = 1, limit = 10 } = req.query;
    const pageNumber = parseInt(page);
@@ -587,6 +595,108 @@ const getUserProfileById = asyncHandler(async (req, res) => {
    }
 });
 
+const getFeed = asyncHandler(async (req, res) => {
+   const userId = req.user?._id;
+   const limit = 10;
+   const cursor = req.query.cursor ? new Date(req.query.cursor) : new Date();
+
+   const followedUsersIds = await Follow.find({ follower: userId }).distinct(
+      "followee"
+   );
+   followedUsersIds.push(userId);
+
+   const posts = await Post.aggregate([
+      {
+         $match: {
+            status: "public",
+            createdAt: { $lt: cursor },
+            owner: { $in: followedUsersIds },
+         },
+      },
+      {
+         $sort: { createdAt: -1 },
+      },
+      { $limit: limit + 1 },
+      {
+         $lookup: {
+            from: "users",
+            localField: "owner",
+            foreignField: "_id",
+            as: "owner",
+            pipeline: [
+               {
+                  $project: {
+                     username: 1,
+                     fullname: 1,
+                     avatar: 1,
+                     followersCount: 1,
+                     followingCount: 1,
+                     isPrivate: 1,
+                     isBlocked: 1,
+                     isDisabled: 1,
+                  },
+               },
+            ],
+         },
+      },
+      { $unwind: "$owner" },
+      {
+         $lookup: {
+            from: "likes",
+            let: { postId: "$_id" },
+            pipeline: [
+               {
+                  $match: {
+                     $expr: {
+                        $and: [
+                           { $eq: ["$targetId", "$$postId"] },
+                           {
+                              $eq: [
+                                 "$likedBy",
+                                 new mongoose.Types.ObjectId(req.user?._id),
+                              ],
+                           },
+                        ],
+                     },
+                  },
+               },
+            ],
+            as: "userLike",
+         },
+      },
+      {
+         $addFields: {
+            hasLiked: {
+               $gt: [{ $size: "$userLike" }, 0],
+            },
+         },
+      },
+   ]);
+
+   let nextCursor = null;
+   let hasNextPage = false;
+   if (posts.length > limit) {
+      hasNextPage = true;
+      const lastPost = posts[limit - 1];
+      nextCursor = lastPost.createdAt;
+      posts.pop();
+   }
+
+   if (!posts) {
+      throw new ApiError(500, "Something went wrong while fetching feed posts");
+   }
+
+   return res
+      .status(200)
+      .json(
+         new ApiResponse(
+            200,
+            { posts, nextCursor, hasNextPage },
+            "Feed posts fetched successfully"
+         )
+      );
+});
+
 // const getCurrentUser = asyncHandler(async (req,res) => {
 
 // })
@@ -609,4 +719,5 @@ export {
    getUserProfile,
    changeProfileDetails,
    searchUsers,
+   getFeed,
 };

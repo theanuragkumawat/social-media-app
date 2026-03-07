@@ -291,7 +291,7 @@ function HighlightDialog({
                   onClick={handleSubmit}
                   className="w-full text-sky-500 font-bold text-sm py-3.5 cursor-pointer dark:active:bg-black/15 disabled:cursor-none disabled:text-neutral-500 flex items-center justify-center"
                 >
-                    {isLoading ? <Loader className="animate-spin dark:text-white" /> : "Next"}
+                    {isLoading ? <Loader className="animate-spin dark:text-white" /> : "Done"}
                 </button>
               </div>
             </>

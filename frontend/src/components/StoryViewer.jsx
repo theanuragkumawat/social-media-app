@@ -230,7 +230,7 @@ function StoryViewer({
           </button>
         </div>
         <button
-          className="z-50 cursor-pointer absolute right-0 top-0 m-5 hover:scale-105 active:scale-85 transition-transform duration-75"
+          className="z-50 cursor-pointer absolute right-0 top-0 m-5 hover:scale-105 active:scale-94 transition-transform duration-150"
           onClick={() => setShowStoryViewer(false)}
         >
           <XIcon className="text-amber-50 size-9" />

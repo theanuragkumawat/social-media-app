@@ -269,6 +269,23 @@ const getUserHighlights = async function (userId) {
   }
 };
 
+// const getUserFeed = async function () {
+//   try {
+//     const response = await axios({
+//       url: `/users/feed`,
+//       method: "get",
+//       withCredentials: true,
+//       headers: {
+//         "Content-Type": "application/json",
+//       },
+//     });
+
+//     return response;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
+
 export {
   createPost,
   changeAvatar,

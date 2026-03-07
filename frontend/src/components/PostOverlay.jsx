@@ -172,14 +172,14 @@ function PostOverlay({
               {post?.caption && (
                 <div className="flex gap-3 px-4">
                   <img
-                    src={userData.avatar}
+                    src={postData.owner.avatar}
                     alt="user"
-                    className="mt-1 h-8 w-8 rounded-full"
+                    className="mt-1 h-8 w-8 object-cover rounded-full"
                   />
                   <div className="flex flex-col gap-1 text-sm text-white">
                     <div>
                       <span className="mr-2 font-semibold">
-                        {userData.username}
+                        {postData.owner.username}
                       </span>
                       {post.caption}
                     </div>

@@ -28,7 +28,7 @@ function PostComments({ postId }) {
           <img
             src={comment.owner.avatar ? comment.owner.avatar : null}
             alt="user"
-            className="mt-1 h-8 w-8 rounded-full bg-neutral-800"
+            className="mt-1 h-8 w-8 object-cover rounded-full bg-neutral-800"
           />
           <div className="flex w-full flex-col gap-0.5 text-sm text-white">
             <div className="flex items-start justify-between">

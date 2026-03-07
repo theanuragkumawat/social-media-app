@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { changeAvatar, changeCurrentPassword, changeProfileDetails, dobRegisterUser, forgotPasswordRequest, getCurrentUser, getUserProfile, loginUser, logoutUser, refreshAccessToken, registerUser, removeAvatar, resendEmailVerification, resetForgotPassword, searchUsers, verifyEmail, verifyOtp } from "../controllers/user.controller.js";
+import { changeAvatar, changeCurrentPassword, changeProfileDetails, dobRegisterUser, forgotPasswordRequest, getCurrentUser, getFeed, getUserProfile, loginUser, logoutUser, refreshAccessToken, registerUser, removeAvatar, resendEmailVerification, resetForgotPassword, searchUsers, verifyEmail, verifyOtp } from "../controllers/user.controller.js";
 import { getAllUserPosts } from "../controllers/post.controller.js";
 import {
    userChangeCurrentPasswordValidator,
@@ -38,6 +38,7 @@ router.route("/avatar").delete(verifyJWT,removeAvatar)
 router.route("/search-users").get(verifyJWT,searchUsers)
 router.route("/profile").patch(verifyJWT,changeProfileDetails)
 router.route("/resend-email-verification").post(verifyJWT,resendEmailVerification)
+router.route('/feed').get(verifyJWT,getFeed)
 
 //optional secured
 router.route("/profile/:username").get(verifyJWTOptional,getUserProfile)

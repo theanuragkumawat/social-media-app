@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  getUserHighlights,
   getUserProfile,
   getUserStories,
   toggleFollowUser,
@@ -136,6 +137,25 @@ const UserOwnProfile = function ({
     }
     setIsFollowUpdating(false);
   }
+
+  const [highlights, setHighlights] = useState([]);
+
+  async function fetchHighlights() {
+    try {
+      const response = await getUserHighlights(userData._id);
+      setHighlights(response.data.data);
+      // console.log("Highlights:", response.data.data);
+    } catch (error) {
+      console.error("Error fetching highlights:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (userData?._id) {
+      fetchHighlights();
+    }
+  }, [userData]);
+
   const [stories, setStories] = useState([]);
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [activeUserIndex, setActiveUserIndex] = useState(0);
@@ -303,35 +323,52 @@ const UserOwnProfile = function ({
           }}
         >
           <CarouselContent className="-ml-1 w-full">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((item, index) => (
-              <CarouselItem
-                key={index}
-                className={"pl-1 sm:basis-1/6 basis-1/5"}
-              >
-                <div className="p-0 md:p-3 w-fit">
-                  <Card className="bg-transparent border-none w-fit">
-                    <CardContent className="px-0 flex flex-col items-center">
-                      <div className="pb-4 cursor-pointer active:scale-97 text-center">
-                        <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
-                          <img
-                            className="w-full h-full object-cover rounded-full select-none"
-                            src="https://images.unsplash.com/photo-1696834137457-8872b6c525f4?q=80&w=200"
-                            alt="highlight"
-                          />
-                        </div>
+            {highlights?.map((item, index) => (
+                <CarouselItem
+                  key={index}
+                  className={"pl-1 sm:basis-1/6 basis-1/5"}
+                >
+                  <div className="p-0 md:px-3 w-fit">
+                    <Card className="bg-transparent border-none w-fit">
+                      <CardContent className="px-0 flex flex-col items-center">
+                        <div
+                          onClick={() => {
+                            const adaptedHighlights = highlights.map((highlight) => {
 
-                        <p className="text-center text-xs font-semibold text-neutral-50 mt-3">
-                          Trip '24
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </CarouselItem>
-            ))}
+                              return ({
+                                user: {
+                                  avatar: highlight.cover,
+                                  username: highlight.title,
+                                  createdAt: highlight.createdAt
+                                },
+                                stories: highlight.stories
+                              })
+                            })
+
+                            setStories(adaptedHighlights)
+                            setActiveUserIndex(index)
+                            setShowStoryViewer(true)
+                          }}
+                         className="pb-4 cursor-pointer active:scale-97 text-center"
+                         >
+                          <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
+                            <img
+                              className="w-full h-full object-cover rounded-full select-none"
+                              src={item.cover ? item.cover : null}
+                            />
+                          </div>
+
+                          <p className="text-center text-xs font-semibold text-neutral-50 mt-3 w-16  mx-auto truncate">
+                            {item.title}
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
           </CarouselContent>
           <CarouselPrevious className={"hidden sm:flex z-30"} />
-
           <CarouselNext className={"hidden sm:flex"} />
         </Carousel>
       </div>
@@ -535,7 +572,7 @@ function UserUploads({ userId, totalPosts, userData }) {
 
       <PostOverlay
         postData={currentOverlayPost}
-        userData={userData}
+        // userData={userData}
         openPostOverlay={openPostOverlay}
         setOpenPostOverlay={setOpenPostOverlay}
       />

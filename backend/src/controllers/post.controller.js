@@ -336,6 +336,7 @@ const togglePostStatus = asyncHandler(async (req, res) => {
       );
 });
 
+
 export {
    uploadPost,
    getPostById,
@@ -343,4 +344,5 @@ export {
    updatePost,
    deletePost,
    togglePostStatus,
+   
 };

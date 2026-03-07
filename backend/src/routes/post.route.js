@@ -17,6 +17,8 @@ router.route('/:postId')
 .patch(updatePost)
 .delete(deletePost)
 
+// router.route('/:userId/feed').get()
+
 router.route('/:postId/status').patch(togglePostStatus)
 router.route('/:userId/posts').get(verifyJWTOptional,getAllUserPosts)
 export default router

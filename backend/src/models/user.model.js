@@ -40,7 +40,6 @@ const userSchema = new mongoose.Schema(
       website: {
          type: String,
          trim: true,
-         lowercase: true,
          match: [
             /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/.*)?$/,
             "Please enter a valid website URL",

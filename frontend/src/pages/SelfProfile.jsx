@@ -24,6 +24,7 @@ import HighlightDialog from "../components/HighlightDialog.jsx";
 import { getUserHighlights, getUserProfile } from "../utils/config";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
 import { useGetAllUserPostsQuery } from "../store/api/apiSlice.js";
+import StoryViewer from "../components/StoryViewer.jsx";
 
 function SelfProfile() {
   const dispatch = useDispatch();
@@ -67,6 +68,12 @@ function SelfProfile() {
 }
 
 const UserOwnProfile = function ({ userData }) {
+
+    const [stories, setStories] = useState([]);
+    const [showStoryViewer, setShowStoryViewer] = useState(false);
+    const [activeUserIndex, setActiveUserIndex] = useState(0);
+    const [activeStoryIndex, setActiveStoryIndex] = useState(0);
+
   const [openHighlightDialog, setOpenHighlightDialog] = useState(false);
   const [highlights, setHighlights] = useState([]);
 
@@ -199,10 +206,29 @@ const UserOwnProfile = function ({ userData }) {
                   key={index}
                   className={"pl-1 sm:basis-1/6 basis-1/5"}
                 >
-                  <div className="p-0 md:p-3 w-fit">
+                  <div className="p-0 md:px-3 w-fit">
                     <Card className="bg-transparent border-none w-fit">
                       <CardContent className="px-0 flex flex-col items-center">
-                        <div className="pb-4 cursor-pointer active:scale-97 text-center">
+                        <div
+                          onClick={() => {
+                            const adaptedHighlights = highlights.map((highlight) => {
+
+                              return ({
+                                user: {
+                                  avatar: highlight.cover,
+                                  username: highlight.title,
+                                  createdAt: highlight.createdAt
+                                },
+                                stories: highlight.stories
+                              })
+                            })
+
+                            setStories(adaptedHighlights)
+                            setActiveUserIndex(index)
+                            setShowStoryViewer(true)
+                          }}
+                         className="pb-4 cursor-pointer active:scale-97 text-center"
+                         >
                           <div className="mx-auto w-15 h-15 md:w-20 md:h-20 ring-3 ring-offset-3 ring-offset-neutral-950 ring-neutral-600 rounded-full">
                             <img
                               className="w-full h-full object-cover rounded-full select-none"
@@ -220,7 +246,7 @@ const UserOwnProfile = function ({ userData }) {
                 </CarouselItem>
               ))}
               <CarouselItem className={"pl-1 sm:basis-1/6 basis-1/5"}>
-                <div className="p-0 md:p-3 w-fit">
+                <div className="p-0 md:px-3 w-fit">
                   <Card className="bg-transparent border-none w-fit">
                     <CardContent className="px-0 flex flex-col items-center">
                       <div
@@ -258,6 +284,16 @@ const UserOwnProfile = function ({ userData }) {
           />
         )
       }
+      {showStoryViewer && (
+        <StoryViewer
+          data={stories}
+          userIndex={activeUserIndex}
+          storyIndex={activeStoryIndex}
+          setUserIndex={setActiveUserIndex}
+          setStoryIndex={setActiveStoryIndex}
+          setShowStoryViewer={setShowStoryViewer}
+        />
+      )}
     </>
   );
 };
