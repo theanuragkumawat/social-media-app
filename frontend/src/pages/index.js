@@ -4,6 +4,7 @@ import ForgotPassword from "./ForgotPassword";
 import Home from "./Home";
 import SelfProfile from "./SelfProfile";
 import UserProfile from "./UserProfile";
+import Messages from "./Messages";
 
 export {
     Home,
@@ -11,5 +12,6 @@ export {
     Signup,
     ForgotPassword,
     SelfProfile,
-    UserProfile
+    UserProfile,
+    Messages
 }

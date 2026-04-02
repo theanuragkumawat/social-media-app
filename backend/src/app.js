@@ -1,10 +1,46 @@
+import http from "http"
 import { errorHandler } from "./middlewares/error.middleware.js";
 import mongoose from "mongoose";
 import express, { urlencoded } from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import { Server } from "socket.io"
 
 const app = express();
+const server = http.createServer(app)
+
+
+//socket server
+const io = new Server(server, {
+    cors: {
+        origin: process.env.CORS_ORIGIN,
+        credentials: true
+    }
+})
+
+//store online users
+export const userSocketMap = {}; // { databaseUserId: socketId }
+
+//socket connection handler
+io.on("connection",(socket) => {
+  const userId = socket.handshake.query.userId;
+  console.log("User connected: ", userId);
+  if(userId){
+    userSocketMap[userId] = socket.id;
+  }
+
+  //emit online users to all clients
+  io.emit("getOnlineUsers", Object.keys(userSocketMap))
+
+  socket.on("disconnect", () => {
+    console.log("User disconnected: ", userId);
+    if(userId){
+      delete userSocketMap[userId];
+    }
+    io.emit("getOnlineUsers", Object.keys(userSocketMap))
+  })
+
+})
 
 app.use(
   cors({
@@ -31,6 +67,7 @@ import commentRouter from "./routes/comment.route.js"
 import likeRouter from "./routes/like.route.js"
 import storyRouter from "./routes/story.route.js"
 import highlightRouter from "./routes/highlight.route.js"
+import messageRouter from "./routes/message.route.js"
 
 //Routes
 app.use('/api/v1/healthcheck',healthCheckRouter);
@@ -59,7 +96,10 @@ app.use('/api/v1/users',storyRouter)
 
 //highlight routes
 app.use('/api/v1/highlights',highlightRouter)
-app.use('/api/v1/users',highlightRouter)
+app.use('/api/v1/users',messageRouter)
+
+
+app.use('/api/v1/messages',highlightRouter)
 
 app.use(errorHandler);
-export { app };
+export { app, io,server };

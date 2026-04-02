@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import {
   Bookmark,
   Dot,
@@ -11,7 +13,14 @@ import {
   Share,
   SquareArrowUpRight,
 } from "lucide-react";
-import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 import { Separator } from "@/components/ui/separator";
 import {
   useLikePostMutation,
@@ -23,7 +32,7 @@ function Post({
   user,
   postId,
   time,
-  imageUrl,
+  media,
   caption,
   likes = 0,
   commentCount = 0,
@@ -45,6 +54,36 @@ function Post({
       likePost(postId);
     }
   };
+
+  const isVideo = (url) => {
+    return url.endsWith(".mp4") || url.includes("/video/");
+  };
+
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { threshold: 0.6 }, // 60% visible hona chahiye
+    );
+
+    observer.observe(video);
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <div className="w-md mx-auto text-white rounded-xs overflow-hidden mt-5">
@@ -75,11 +114,71 @@ function Post({
         </div>
 
         {/* Image */}
-        <img
-          src={imageUrl}
+        {/* <img
+          src={media[0]}
           alt="Post"
           className="w-full object-cover border border-neutral-800"
-        />
+        /> */}
+        {media.length == 1 ? (
+          isVideo(media[0]) ? (
+            <video
+              src={media[0]}
+              ref={videoRef}
+              className="w-full object-cover"
+              controls
+              
+              loop
+            />
+          ) : (
+            <img
+              src={media[0]}
+              alt="Post"
+              className="w-full object-cover border border-neutral-800"
+            />
+          )
+        ) : (
+          <Carousel className="w-full">
+            <CarouselContent className={"relative items-center"}>
+              {media.map((url, index) => {
+                return (
+                  <CarouselItem key={index} className={""}>
+                    <div>
+                      <Card className={"p-0 rounded-none"}>
+                        <CardContent className="flex items-center justify-center  p-0">
+                          {isVideo(url) ? (
+                            <video
+                              ref={videoRef}
+                              src={url}
+                              className="w-full object-cover"
+                              controls
+                              loop
+                            />
+                          ) : (
+                            <img
+                              src={url}
+                              alt="Post"
+                              className="w-full object-cover border border-neutral-800"
+                            />
+                          )}
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            <CarouselPrevious
+              className={
+                "absolute top-[50%] left-2 text-black size-6 !bg-white z-50 opacity-75"
+              }
+            />
+            <CarouselNext
+              className={
+                "absolute top-[50%] right-2 text-black size-6 !bg-white z-50 opacity-75"
+              }
+            />
+          </Carousel>
+        )}
 
         {/* Action & Stats */}
         <div className="py-2 px-1">
@@ -131,8 +230,9 @@ function Post({
             )}
 
             {commentCount ? (
-              <button className="text-sm text-gray-400 text-start"
-              onClick={() => {
+              <button
+                className="text-sm text-gray-400 text-start"
+                onClick={() => {
                   setCurrentOverlayPost(postData);
                   setOpenPostOverlay(true);
                 }}
@@ -141,13 +241,14 @@ function Post({
               </button>
             ) : null}
 
-            <div className="">
+            {/* add comment */}
+            {/* <div className="">
               <input
                 type="text"
                 placeholder="Add a comment..."
                 className="text-sm w-full bg-transparent border-b border-gray-700  text-gray-200 focus:outline-none border-none"
               />
-            </div>
+            </div> */}
           </div>
         </div>
         <div className="mt-2">

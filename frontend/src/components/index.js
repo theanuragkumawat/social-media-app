@@ -9,6 +9,8 @@ import PostOverlay from "./PostOverlay";
 import PostComments from "./PostComments";
 import UserListOverlay from "./UserListOverlay";
 import HighlightDialog from "./HighlightDialog";
+import MessagesSidebar from "./MessagesSidebar";
+import MessagesRightSidebar from "./MessagesRightSidebar";
 
 export {
     Login,
@@ -21,5 +23,7 @@ export {
     PostOverlay,
     PostComments,
     UserListOverlay,
-    HighlightDialog
+    HighlightDialog,
+    MessagesSidebar,
+    MessagesRightSidebar
 }

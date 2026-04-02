@@ -198,7 +198,7 @@ function Home() {
                     }}
                     postId={post._id}
                     time={moment(post.createdAt).fromNow()}
-                    imageUrl={post.media[0]}
+                    media={post.media}
                     likes={post.totalLikes}
                     commentCount={post.totalComments}
                     hasLiked={post.hasLiked}
