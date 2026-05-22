@@ -269,6 +269,58 @@ const getUserHighlights = async function (userId) {
   }
 };
 
+const getChatUsers = async function () {
+  try {
+    const response = await axios({
+      url: `/messages`,
+      method: "get",
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const getMessages = async function (userId,page = 1) {
+  try {
+    const response = await axios({
+      url: `/messages/${userId}?page=${page}`,
+      method: "get",
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const sendMessage = async function (userId, messageData) {
+  try {
+    const response = await axios({
+      url: `/messages/${userId}/message`,
+      method: "post",
+      withCredentials: true,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: messageData
+    });
+
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // const getUserFeed = async function () {
 //   try {
 //     const response = await axios({
@@ -302,4 +354,8 @@ export {
   addComment,
   createHighlight,
   getUserHighlights,
+  getChatUsers,
+  getMessages,
+  sendMessage
+
 };

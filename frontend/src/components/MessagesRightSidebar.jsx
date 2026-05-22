@@ -42,8 +42,8 @@ const [isMuted, setIsMuted] = useState(false);
         </button>
       </div>
 
-      {/* Members Section (Flex-grow to push actions to the bottom) */}
-      <div className="flex-1 px-6 py-5 overflow-y-auto">
+      {/* Members Section For group (Flex-grow to push actions to the bottom) */}
+      {/* <div className="flex-1 px-6 py-5 overflow-y-auto">
         <h3 className="text-[15px] font-bold mb-4">Members</h3>
         
         <div className="flex items-center gap-3 cursor-pointer hover:bg-[#1a1a1a] p-2 -mx-2 rounded-lg transition-colors">
@@ -57,8 +57,11 @@ const [isMuted, setIsMuted] = useState(false);
             <span className="text-sm text-gray-400">{member.username}</span>
           </div>
         </div>
-      </div>
+      </div> */}
 
+<div className="flex-1 px-6 py-5 overflow-y-auto"> 
+
+</div>
       {/* Bottom Actions */}
       <div className="border-t border-[#262626] flex flex-col py-2">
         <button className="w-full text-left px-6 py-3 text-[15px] text-gray-100 hover:bg-[#1a1a1a] transition-colors focus:outline-none">

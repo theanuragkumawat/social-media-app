@@ -20,7 +20,14 @@ const messageSchema = new mongoose.Schema(
         seen: {
             type: Boolean,
             default: false
-        }   
+        },
+        isDeleted: {
+            type: Boolean,
+            default: false
+        },
+        deltedAt: {
+            type: Date
+        }
 
     },
     { timestamps: true })

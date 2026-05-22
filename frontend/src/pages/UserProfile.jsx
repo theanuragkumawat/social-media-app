@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import {
   Clapperboard,
   Contact,
@@ -33,6 +33,7 @@ import PostOverlay from "../components/PostOverlay.jsx";
 import UserListOverlay from "../components/UserListOverlay.jsx";
 
 function UserProfile() {
+  const navigate = useNavigate()
   const { username } = useParams();
   const { isLoggedIn } = useSelector((state) => state.auth);
   const [userData, setUserData] = useState(null);
@@ -95,6 +96,7 @@ const UserOwnProfile = function ({
   followState,
   setFollowState,
 }) {
+  const navigate = useNavigate()
   const [isFollowUpdating, setIsFollowUpdating] = useState(false);
 
   const [openUserListOverlay,setOpenUserListOverlay] = useState(false)
@@ -308,7 +310,11 @@ const UserOwnProfile = function ({
             followState
           )}
         </button>
-        <button className="cursor-pointer font-bold py-3 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">
+        <button
+        onClick={() => {
+          navigate('/messages', { state: { userData } })
+        }}
+         className="cursor-pointer font-bold py-3 dark:bg-gray-700 hover:dark:bg-gray-600 active:scale-98 text-sm rounded-lg w-full">
           Message
         </button>
       </div>

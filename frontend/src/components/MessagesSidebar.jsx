@@ -10,9 +10,11 @@ import {
 import { useState } from "react";
 import { RiMessage3Line, RiMessage3Fill } from "react-icons/ri";
 
+import moment from "moment/moment";
+
 const chatData = [
   {
-    id: 1,
+    _id: 1,
     name: "Anurag Kumawat",
     message: "You sent an attachment.",
     time: "1w",
@@ -20,7 +22,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 2,
+    _id: 2,
     name: "Nishant Tiwari",
     message: "Nishant sent an attachment.",
     time: "1w",
@@ -28,7 +30,7 @@ const chatData = [
     isVerified: true,
   },
   {
-    id: 3,
+    _id: 3,
     name: "Rαjeev Prajapat {pετεR}",
     message: "You sent an attachment.",
     time: "1w",
@@ -36,7 +38,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 4,
+    _id: 4,
     name: "Lakshya",
     message: "You: Ye kaise ho gya",
     time: "1w",
@@ -44,7 +46,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 5,
+    _id: 5,
     name: "Anurag Kumawat",
     message: "You sent an attachment.",
     time: "1w",
@@ -52,7 +54,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 6,
+    _id: 6,
     name: "Nishant Tiwari",
     message: "Nishant sent an attachment.",
     time: "1w",
@@ -60,7 +62,7 @@ const chatData = [
     isVerified: true,
   },
   {
-    id: 7,
+    _id: 7,
     name: "Rαjeev Prajapat {pετεR}",
     message: "You sent an attachment.",
     time: "1w",
@@ -68,7 +70,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 8,
+    _id: 8,
     name: "Lakshya",
     message: "You: Ye kaise ho gya",
     time: "1w",
@@ -76,7 +78,7 @@ const chatData = [
     isVerified: false,
   },
   {
-    id: 8,
+    _id: 9,
     name: "Sweety Sonawat",
     message: "You: Ye kaise ho gya",
     time: "1w",
@@ -85,10 +87,14 @@ const chatData = [
   },
 ];
 
-function MessagesSidebar({ selectedUser, setSelectedUser }) {
+function MessagesSidebar({ selectedUser, setSelectedUser, users, setUsers }) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
+
+  // const filteredUsers = users.filter((user) => user.username.toLowerCase().includes(query.toLowerCase()) || user.fullname.toLowerCase().includes(query.toLowerCase()));
+
   const [loading, setLoading] = useState(false);
+  // console.log("this", selectedUser);
 
   return (
     <div className="border-r-[0.5px] border-neutral-800 min-h-screen">
@@ -152,16 +158,22 @@ function MessagesSidebar({ selectedUser, setSelectedUser }) {
 
         <div className="bg-neutral-950 min-h-screen w-full max-w-md mx-auto py-4 font-sans text-white">
           <div className="flex flex-col">
-            {chatData.map((chat) => (
+            {users.map((chat) => (
               <div
-                key={chat.id}
-                className="flex items-center cursor-pointer hover:bg-neutral-800 py-2.5 px-4 active:scale-97"
+               onClick={() => {
+                setSelectedUser(chat.user)
+                setUsers((prevUsers) => (prevUsers.map((u) => u._id === chat.user._id ? { ...u, unreadCount: 0 } : u)))  
+                
+              }
+              }
+                key={chat.user._id}
+                className={`${selectedUser && chat._id == selectedUser._id ? "bg-black/50" : ""} rounded-2xl flex items-center cursor-pointer hover:bg-neutral-800 py-2.5 px-4 active:scale-97`}
               >
                 {/* Avatar Profile Picture */}
                 <div className="shrink-0 relative">
                   <img
-                    src={chat.avatar}
-                    alt={`${chat.name}'s profile`}
+                    src={chat.user.avatar}
+                    alt={`${chat.user.fullname}'s profile`}
                     className="w-[56px] h-[56px] rounded-full object-cover border border-neutral-800"
                   />
                 </div>
@@ -171,18 +183,24 @@ function MessagesSidebar({ selectedUser, setSelectedUser }) {
                   {/* Name & Badge Row */}
                   <div className="flex items-center">
                     <span className="text-[15px] font-semibold text-gray-100 truncate tracking-tight">
-                      {chat.name}
+                      {chat.user.fullname}
                     </span>
-                    {chat.isVerified && <BadgeCheck className="size-4.5 ml-0.5  fill-blue-700" />}
                   </div>
 
                   {/* Message & Timestamp Row */}
                   <div className="flex items-center text-[13px] text-gray-400 mt-0.5">
-                    <span className="truncate">{chat.message}</span>
+                    <span className="truncate">{chat.lastMessage}</span>
                     <span className="mx-1 px-0.5">·</span>
-                    <span className="shrink-0">{chat.time}</span>
+                    <span className="shrink-0">{moment(chat.lastMessageTime).fromNow()}</span>
                   </div>
                 </div>
+                <div className="ml-4">
+                  {chat.unreadCount > 0 && (
+                    <div className="min-w-[20px] px-1.5 py-0.5 rounded-full bg-[#3797f0] text-white text-xs font-semibold flex items-center justify-center">
+                      {chat.unreadCount}
+                    </div>
+                  )}
+                </div>  
               </div>
             ))}
           </div>

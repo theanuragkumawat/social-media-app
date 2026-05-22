@@ -12,7 +12,7 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { getCurrentUser } from "../utils/auth.js";
 import { login as storeLogin } from "../store/Auth/AuthSlice.js";
-import { CornerLeftUpIcon } from "lucide-react";
+import { CircleCheck, CornerLeftUpIcon } from "lucide-react";
 import { getAllFeedStories } from "../utils/config.js";
 import { useGetUserFeedQuery, useLikePostMutation,useUnlikePostMutation } from "../store/api/apiSlice.js";
 import moment from "moment";
@@ -221,9 +221,13 @@ function Home() {
             </div>
           )}
           {!hasNextPage && feedPosts?.length > 0 && (
-            <h4 className="my-4 text-neutral-400 text-sm">
+            <div className="w-full flex items-center justify-center my-4 text-neutral-400 text-sm">
+
+            <h4 className="mr-1">
               You're all caught up!
             </h4>
+            <CircleCheck />
+            </div>
           )}
 
           {/* //button */}

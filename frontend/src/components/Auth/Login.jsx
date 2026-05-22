@@ -9,11 +9,13 @@ import { loginUser } from "../../utils/auth.js";
 import { Loader } from "lucide-react";
 import { useSelector, useDispatch } from 'react-redux'
 import { login as storeLogin } from "../../store/Auth/AuthSlice.js";
+import { connectSocket } from "../../utils/socket.js";
+import { setOnlineUsers } from "../../store/Auth/AuthSlice.js";
 
 function Login() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
-  const {isLoggedIn,userData} = useSelector(state => state.auth)
+  const { isLoggedIn, userData } = useSelector(state => state.auth)
   const {
     register,
     handleSubmit,
@@ -28,6 +30,12 @@ function Login() {
     try {
       const response = await loginUser(data);
       if (response) {
+        console.log("loginnn",response);
+        
+        const newSocket = connectSocket(response.data.data.user._id);
+        newSocket.on("getOnlineUsers", (userIds) => {
+          dispatch(setOnlineUsers(userIds));
+        });
         console.log(response);
         dispatch(storeLogin(response.data.data.user))
         navigate("/")
@@ -35,7 +43,7 @@ function Login() {
     } catch (error) {
       setError(error.response.data.message);
       console.log(error);
-      
+
     } finally {
       setIsLoading(false);
     }
