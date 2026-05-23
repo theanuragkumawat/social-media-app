@@ -25,6 +25,8 @@ const loginUser = async function ({ email, password }) {
   if (!email || !password) {
     throw new Error("Email and password are required");
   }
+
+  console.log("Logging in with:", email, password);
   try {
     const response = await axios({
       url: "/users/login",
