@@ -38,7 +38,6 @@ function App() {
         if (response) {
           console.log("Logged in data:",response);
           dispatch(storeLogin(response.data.data));
-
           const newSocket =  connectSocket(response.data.data._id);
           newSocket.on("getOnlineUsers", (userIds) => {
             dispatch(setOnlineUsers(userIds));
