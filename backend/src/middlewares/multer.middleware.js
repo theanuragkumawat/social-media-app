@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import multer from "multer";
 
 const tempDir = path.join(process.cwd(), "public/temp");
 
@@ -16,3 +17,5 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
+
+export const upload = multer({ storage: storage })

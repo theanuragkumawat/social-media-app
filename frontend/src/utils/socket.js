@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 let socket = null;
 
 export const connectSocket = (userId) => {
-  const newSocket = io("https://social-media-app-gphq.onrender.com", {
+  const newSocket = io(import.meta.env.VITE_BASE_URL, {
     query: { userId }
   });
 
