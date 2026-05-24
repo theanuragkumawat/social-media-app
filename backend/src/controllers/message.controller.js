@@ -92,7 +92,7 @@ const getUsersForSidebar = asyncHandler(async (req, res) => {
 })
 
 const getMessages = asyncHandler(async (req, res) => {
-    console.log("Fetching messages for user", { userId: req.user?._id, selectedUserId: req.params.userId, query: req.query });
+    // console.log("Fetching messages for user", { userId: req.user?._id, selectedUserId: req.params.userId, query: req.query });
     const userId = new mongoose.Types.ObjectId(req.user?._id);
     const selectedUserId = new mongoose.Types.ObjectId(req.params.userId);
 
@@ -174,6 +174,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     }
 
     //Emit message to recipient if online
+    console.log("User socket map:", userSocketMap);
     const recipientSocketId = userSocketMap[recipientId.toString()];
     if (recipientSocketId) {
         io.to(recipientSocketId).emit("newMessage", message);

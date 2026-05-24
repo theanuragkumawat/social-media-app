@@ -15,16 +15,17 @@ const server = http.createServer(app)
 const io = new Server(server, {
   cors: {
     origin: process.env.CORS_ORIGIN,
-    credentials: true
-  }
+    credentials: true,
+  },
+  transports: ["websocket"]
 })
 
 //store online users
 export const userSocketMap = {}; // { databaseUserId: socketId }
-
+console.log(process.env.CORS_ORIGIN);
 //socket connection handler
 io.on("connection", (socket) => {
-  const userId = socket.handshake.query.userId;
+  const userId = socket.handshake.auth.userId;
   console.log("User connected: ", userId);
   if (userId) {
     userSocketMap[userId] = socket.id;
