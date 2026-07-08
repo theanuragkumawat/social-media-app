@@ -320,7 +320,9 @@ const UserOwnProfile = function ({
       </div>
 
       {/* Highlites */}
-      <div className="mt-10 md:gap-1  max-w-full">
+      {
+        highlights && highlights.length > 0 &&
+        <div className="mt-10 md:gap-1  max-w-full">
         <Carousel
           className=" max-w-xl "
           opts={{
@@ -377,8 +379,8 @@ const UserOwnProfile = function ({
           <CarouselPrevious className={"hidden sm:flex z-30"} />
           <CarouselNext className={"hidden sm:flex"} />
         </Carousel>
-      </div>
-
+        </div>
+      }
       {showStoryViewer && (
         <StoryViewer
           data={stories}
@@ -491,7 +493,7 @@ function UserUploads({ userId, totalPosts, userData }) {
           </TabsList>
           <TabsContent value="post" className={" w-full"}>
             <>
-              <h2 className="text-center font-bold">Posts</h2>
+              {/* <h2 className="text-center font-bold">Posts</h2> */}
               <div className="grid grid-cols-3 xl:grid-cols-4 3xl:grid-cols-5 gap-0.5 rounded-md overflow-hidden">
                 {posts.map((item) => (
                   <PostCard
@@ -523,7 +525,7 @@ function UserUploads({ userId, totalPosts, userData }) {
           </TabsContent>
           <TabsContent value="reel" className={"border-1 border-amber-600"}>
             <>
-              <h2 className="text-center font-bold">Reels</h2>
+              {/* <h2 className="text-center font-bold">Reels</h2> */}
               <div className="grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 3xl:grid-cols-5 gap-0.5">
                 <ReelCard
                   url={
